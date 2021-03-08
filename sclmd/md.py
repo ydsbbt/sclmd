@@ -9,8 +9,8 @@ from netCDF4 import Dataset
 from numpy import linalg as LA
 from tqdm import tqdm
 
-import units as U
-from functions import bose, chkShape, mdot, powerspecp, rpadleft, symmetrize
+import sclmd.units as U
+from sclmd.functions import bose, chkShape, mdot, powerspecp, rpadleft, symmetrize
 
 
 class md:

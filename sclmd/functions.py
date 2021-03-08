@@ -2,7 +2,7 @@ import sys
 
 import numpy as N
 
-import units as U
+import sclmd.units as U
 
 
 class myfft:

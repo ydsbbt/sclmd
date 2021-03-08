@@ -2,8 +2,8 @@ import sys
 
 import numpy as N
 
-from functions import antisymmetrize, chkShape, flinterp, mdot, symmetrize
-from noise import enoise, mf, phnoise
+from sclmd.functions import antisymmetrize, chkShape, flinterp, mdot, symmetrize
+from sclmd.noise import enoise, mf, phnoise
 
 
 def exlist(a, indices):

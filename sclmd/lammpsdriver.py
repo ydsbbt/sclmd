@@ -7,9 +7,10 @@ import sys
 import numpy as N
 from lammps import lammps
 
-from tools import get_atomname
+from sclmd.tools import get_atomname
 
 args = "-screen none"
+
 
 class lammpsdriver(lammps):
     # create instance of LAMMPS

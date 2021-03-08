@@ -4,8 +4,8 @@ import numpy as N
 from numpy import linalg as LA
 from tqdm import tqdm
 
-import units as U
-from functions import bose, chkShape, flinterp, hermitianize, mdot, myfft
+import sclmd.units as U
+from sclmd.functions import bose, chkShape, flinterp, hermitianize, mdot, myfft
 
 
 # --------------------------------------------------------------------------------------

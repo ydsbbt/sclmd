@@ -104,14 +104,14 @@ def get_atomname(mass):
     """
     get the element name from its atomic mass by checking the dictionary
     """
-    import units as U
+    import sclmd.units as U
     
     for key, value in list(U.AtomicMassTable.items()):
         if abs(mass-value) < 0.01:
             return key
             
 if __name__ == "__main__":
-    from tools import dumpavetraj
+    from sclmd.tools import dumpavetraj
     lammps = "structure.data"
     trajectories = ["trajectories.300.run0.ani", "trajectories.300.run1.ani",
                     "trajectories.300.run2.ani", "trajectories.300.run3.ani", "trajectories.300.run4.ani"]

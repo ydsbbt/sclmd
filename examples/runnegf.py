@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from negf import bpt
+from sclmd.negf import bpt
 from matplotlib import pyplot as plt
 lammpsinfile = [
     'atom_style full',

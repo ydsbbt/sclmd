@@ -1,9 +1,9 @@
 import time
 import numpy as np
-from baths import ebath
-from tools import calHF, calTC
-from lammpsdriver import lammpsdriver
-from md import md
+from sclmd.baths import ebath
+from sclmd.tools import calHF, calTC
+from sclmd.lammpsdriver import lammpsdriver
+from sclmd.md import md
 
 lammpsinfile = [
     #'log none',

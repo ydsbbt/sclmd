@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from lammps import lammps
 
-from tools import get_atomname
+from sclmd.tools import get_atomname
 
 
 class bpt:
