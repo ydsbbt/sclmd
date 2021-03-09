@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
 # LAMMPS driver for Langevin molecular dynamics
 # Adapted from LAMMPS python wraper
 
@@ -35,7 +38,7 @@ class lammpsdriver(lammps):
         # start lammps
         self.start()
 
-    def start(self, np=1):
+    def start(self):
         print("LAMMPS launched")
         # todo:better to set the unit to metals here again
         #self.command("units metal")
@@ -52,7 +55,7 @@ class lammpsdriver(lammps):
             self.els.append(self.mass[type])
         self.xyz = self.gather_atoms("x", 1, 3)
         self.conv = self.md2ang*np.array([3*[1.0/np.sqrt(mass)]
-                                         for mass in self.els]).flatten()
+                                          for mass in self.els]).flatten()
         self.type = np.array(self.gather_atoms("type", 0, 1))
         #self.mass = np.array(self.gather_atoms("mass",1,1))
         self.axyz = []
