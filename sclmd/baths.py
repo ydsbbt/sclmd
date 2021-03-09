@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
 import sys
 
 import numpy as np
@@ -8,7 +11,7 @@ from sclmd.noise import enoise, mf, phnoise
 
 def exlist(a, indices):
     return a[indices]
-    #return np.array([a[i] for i in indices])
+    # return np.array([a[i] for i in indices])
 
 # fourier transform of gamma (calculated directly, no fft)
 
@@ -186,7 +189,7 @@ class ebath:
         print("ebath.gnoi:classical: %r" % self.classical)
         print("ebath.gnoi:including zero point motion: %r" % self.zpmotion)
         self.noise = np.real(enoise(self.efric, self.exim, self.exip,
-                                   self.bias, self.T, self.wmax, self.dt, self.nmd, self.classical, self.zpmotion))
+                                    self.bias, self.T, self.wmax, self.dt, self.nmd, self.classical, self.zpmotion))
 
     def GetSig(self):
         '''
@@ -234,18 +237,21 @@ class ebath:
                 else:
                     print("WARNING: nonlocal electronic force not implemented!")
                     # stophere
-                    f = f-mdot(self.kernel[i], exlist(phis[i], self.cids))*self.dt
+                    f = f-mdot(self.kernel[i],
+                               exlist(phis[i], self.cids))*self.dt
         else:
             for i in range(self.ml):  # friction,nc,rn,berry
                 if self.ml == 1:
                     f = f-mdot(self.kernel[i], exlist(phis[i], self.cids))\
                         + mdot(self.bias*self.exim, exlist(qhis[0], self.cids))\
                         - mdot(self.bias*self.zeta1, exlist(qhis[0], self.cids))\
-                        - mdot(self.bias*self.zeta2, exlist(phis[0], self.cids))
+                        - mdot(self.bias*self.zeta2,
+                               exlist(phis[0], self.cids))
                 else:
                     print("WARNING: nonlocal electronic force not implemented!")
                     # stophere
-                    f = f-mdot(self.kernel[i], exlist(phis[i], self.cids))*self.dt
+                    f = f-mdot(self.kernel[i],
+                               exlist(phis[i], self.cids))*self.dt
         return mf(f, self.cids, len(phis[0]))
 
 
@@ -399,7 +405,7 @@ class phbath:
         print("phbath.gnoi:classical: %r" % self.classical)
         print("phbath.gnoi:including zero point motion:%r" % self.zpmotion)
         self.noise = np.real(phnoise(self.gamma, self.gwl, self.T,
-                                    self.wmax, self.dt, self.nmd, self.classical, self.zpmotion))
+                                     self.wmax, self.dt, self.nmd, self.classical, self.zpmotion))
         # np.linspace(self.gwl[0],self.gwl[-1])
 
     def gmem(self):

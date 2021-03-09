@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
 import numpy as np
 
 
@@ -100,22 +103,26 @@ def calTC(delta, dlist=1):
     np.savetxt('thermalconductance.'+str(int(temperture))+'.dat',
                (np.mean(kappa), np.std(kappa)), header="Mean Std")
 
+
 def get_atomname(mass):
     """
     get the element name from its atomic mass by checking the dictionary
     """
     import sclmd.units as U
-    
+
     for key, value in list(U.AtomicMassTable.items()):
         if abs(mass-value) < 0.01:
             return key
-            
+
+
 if __name__ == "__main__":
     from sclmd.tools import dumpavetraj
     lammps = "structure.data"
     trajectories = ["trajectories.300.run0.ani", "trajectories.300.run1.ani",
                     "trajectories.300.run2.ani", "trajectories.300.run3.ani", "trajectories.300.run4.ani"]
-    dumpavetraj(lammps, trajectories, position_only=False,outputname="avetrajectories.data")
+    dumpavetraj(lammps, trajectories, position_only=False,
+                outputname="avetrajectories.data")
     avefiles = ["avestructure.300.run0.dat", "avestructure.300.run1.dat",
                 "avestructure.300.run2.dat", "avestructure.300.run3.dat", "avestructure.300.run4.dat"]
-    dumpavetraj(lammps, trajectories, position_only=True,outputname="avestructure.data")
+    dumpavetraj(lammps, trajectories, position_only=True,
+                outputname="avestructure.data")

@@ -2,7 +2,7 @@
 # -*- coding:utf-8 _*-
 from setuptools import setup, find_packages
 
-VERSION = '0.1.0'
+VERSION = '0.1.5'
 
 setup(
     name='sclmd',

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
+
 import os
 import sys
 import time
@@ -119,7 +120,7 @@ class md:
         self.mass = []
         self.get_atommass()
         self.conv = self.md2ang*np.array([3*[1.0/np.sqrt(mass)]
-                                         for mass in self.mass]).flatten()
+                                          for mass in self.mass]).flatten()
 
     def get_atommass(self):
         for atomsname in self.els:
@@ -260,7 +261,8 @@ class md:
                 av = avn
             self.hw = np.array(list(map(np.real, list(map(np.sqrt, av)))))
             self.U = np.array(au)
-            self.dyn = mdot(self.U, np.diag(np.array(av)), np.transpose(self.U))
+            self.dyn = mdot(self.U, np.diag(
+                np.array(av)), np.transpose(self.U))
             # if min(av)>=0:
             #    print "the dynmat should not change much"
             #    print "max diff. of dynmatrix:", abs(self.dyn-ndyn).sum()
@@ -495,7 +497,7 @@ class md:
                     continue
                 else:
                     print("ipie error")
-                    print("ipie=",ipie)
+                    print("ipie=", ipie)
                     sys.exit()
             else:
                 print("new run")
