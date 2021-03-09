@@ -1,6 +1,6 @@
 import sys
 
-import numpy as N
+import numpy as np
 
 from sclmd.functions import antisymmetrize, chkShape, flinterp, mdot, symmetrize
 from sclmd.noise import enoise, mf, phnoise
@@ -8,7 +8,7 @@ from sclmd.noise import enoise, mf, phnoise
 
 def exlist(a, indices):
     return a[indices]
-    #return N.array([a[i] for i in indices])
+    #return np.array([a[i] for i in indices])
 
 # fourier transform of gamma (calculated directly, no fft)
 
@@ -34,19 +34,19 @@ def gamt(tl, wl, gwl, gam, eta_ad=0):
         for t in tl:
             tm = []
             for i in range(len(wl)):
-                tm.append(N.array(flinterp(wl[i], gwl, gam))*N.cos(wl[i]*t))
+                tm.append(np.array(flinterp(wl[i], gwl, gam))*np.cos(wl[i]*t))
             # 2.0 account for the negative frequency part
-            gt.append(2.0*N.mean(N.array(tm), axis=0)*wl[-1]/N.pi)
+            gt.append(2.0*np.mean(np.array(tm), axis=0)*wl[-1]/np.pi)
     else:
         print("eta!=0")
         for t in tl:
             tm = []
             for i in range(len(wl)):
-                tm.append(N.array(flinterp(wl[i], gwl, gam))*wl[i]/(wl[i]-1j*eta_ad)*N.exp(-1j*wl[i]*t-eta_ad*t)+N.array(
-                    flinterp(wl[i], gwl, gam))*wl[i]/(wl[i]+1j*eta_ad)*N.exp(+1j*wl[i]*t-eta_ad*t))
-            gt.append(N.mean(N.array(tm), axis=0)*wl[-1]/N.pi)
-            # print "TG imag:", max(N.imag(N.mean(N.array(tm[-1]),axis=0)*wl[-1]/N.pi))
-    return N.array(N.real(gt))
+                tm.append(np.array(flinterp(wl[i], gwl, gam))*wl[i]/(wl[i]-1j*eta_ad)*np.exp(-1j*wl[i]*t-eta_ad*t)+np.array(
+                    flinterp(wl[i], gwl, gam))*wl[i]/(wl[i]+1j*eta_ad)*np.exp(+1j*wl[i]*t-eta_ad*t))
+            gt.append(np.mean(np.array(tm), axis=0)*wl[-1]/np.pi)
+            # print "TG imag:", max(np.imag(np.mean(np.array(tm[-1]),axis=0)*wl[-1]/np.pi))
+    return np.array(np.real(gt))
 
 
 class ebath:
@@ -72,14 +72,14 @@ class ebath:
 
     def __init__(self, cats, T, dt, nmd, wmax=None, nw=None, bias=0.,
                  efric=None, exim=None, exip=None, zeta1=None, zeta2=None, classical=False, zpmotion=True):
-        self.cats = N.array(cats, dtype='int')
-        #self.cids = N.array([[3*c+0,3*c+1,3*c+2] for c in cats]).flatten()
-        self.cids = N.array(cats, dtype='int')
+        self.cats = np.array(cats, dtype='int')
+        #self.cids = np.array([[3*c+0,3*c+1,3*c+2] for c in cats]).flatten()
+        self.cids = np.array(cats, dtype='int')
         self.nc = len(self.cids)
         self.T, self.wmax = T, wmax
         self.nw, self.bias = nw, bias
         self.dt, self.nmd = dt, nmd
-        self.cur = N.zeros(nmd)
+        self.cur = np.zeros(nmd)
         self.classical = classical
         self.zpmotion = zpmotion
 
@@ -113,11 +113,11 @@ class ebath:
                 sys.exit()
             print("ebath.setEmat: symmetrizing efric")
             self.efric = symmetrize(efric)
-            self.kernel = N.array([self.efric])
-            self.exip = N.zeros(shape=(n, n))
-            self.exim = N.zeros(shape=(n, n))
-            self.zeta1 = N.zeros(shape=(n, n))
-            self.zeta2 = N.zeros(shape=(n, n))
+            self.kernel = np.array([self.efric])
+            self.exip = np.zeros(shape=(n, n))
+            self.exim = np.zeros(shape=(n, n))
+            self.zeta1 = np.zeros(shape=(n, n))
+            self.zeta2 = np.zeros(shape=(n, n))
             self.ebath = True
         else:
             print("ebath.CheckEmat: no efric provided, setting ebath to False")
@@ -185,7 +185,7 @@ class ebath:
             sys.exit()
         print("ebath.gnoi:classical: %r" % self.classical)
         print("ebath.gnoi:including zero point motion: %r" % self.zpmotion)
-        self.noise = N.real(enoise(self.efric, self.exim, self.exip,
+        self.noise = np.real(enoise(self.efric, self.exim, self.exip,
                                    self.bias, self.T, self.wmax, self.dt, self.nmd, self.classical, self.zpmotion))
 
     def GetSig(self):
@@ -199,7 +199,7 @@ class ebath:
             wl = self.wl
         nw = len(wl)
         nc = chkShape(self.efric)
-        self.sig = N.zeros((nw, nc, nc), N.complex)
+        self.sig = np.zeros((nw, nc, nc), np.complex)
 
         for i in range(nw):
             self.sig[i] = -1.j*wl[i]*(self.efric+self.bias*self.zeta2)\
@@ -288,12 +288,12 @@ class phbath:
     def __init__(self, T, cats, debye, nw, dt, nmd, ml=None, mcof=2.0, sig=None, gamma=None, gwl=None, K00=None, K01=None, V01=None, eta_ad=0, classical=False, zpmotion=True):
         self.classical = classical
         self.zpmotion = zpmotion
-        self.T, self.debye, self.cats = T, debye, N.array(cats, dtype='int')
-        #self.K00,self.K01,self.V01 = N.array(K00),N.array(K01),N.array(V01)
+        self.T, self.debye, self.cats = T, debye, np.array(cats, dtype='int')
+        #self.K00,self.K01,self.V01 = np.array(K00),np.array(K01),np.array(V01)
         self.K00, self.K01, self.V01 = K00, K01, V01
         self.dt, self.nmd, self.ml = dt, nmd, ml
         self.kernel = None
-        self.cids = N.array([[3*c+0, 3*c+1, 3*c+2] for c in cats]).flatten()
+        self.cids = np.array([[3*c+0, 3*c+1, 3*c+2] for c in cats]).flatten()
         self.nc = len(self.cids)
         self.wmax = mcof*debye
         self.local = False
@@ -302,7 +302,7 @@ class phbath:
         self.gamma = gamma
         self.sig = sig
         self.gwl = gwl
-        self.cur = N.zeros(nmd)
+        self.cur = np.zeros(nmd)
         self.eta_ad = eta_ad
         #
         # initialise self.gamma
@@ -326,9 +326,9 @@ class phbath:
             # use Debye model
             # friction coefficient from Debye frequency
             # see, Adelman&Doll, JCP, Vol.64,2375 (1976)
-            phfric = debye*N.pi/6.0
-            self.gamma = N.array([N.diag(phfric+N.zeros(int(self.nc)))])
-            self.gwl = N.array([0])
+            phfric = debye*np.pi/6.0
+            self.gamma = np.array([np.diag(phfric+np.zeros(int(self.nc)))])
+            self.gwl = np.array([0])
             self.local = True
             self.ml = 1
 
@@ -377,12 +377,12 @@ class phbath:
             a = []
             for i in range(len(wl)):
                 if wl[i] == 0:
-                    # a.append(-N.imag(Sig[0]))#
-                    a.append(-N.imag(Sig[i+1])/wl[i+1])
+                    # a.append(-np.imag(Sig[0]))#
+                    a.append(-np.imag(Sig[i+1])/wl[i+1])
                 else:
-                    # a.append(-N.imag(Sig[0]))#
-                    a.append(-N.imag(Sig[i])/wl[i])
-            self.gamma = N.array(a)
+                    # a.append(-np.imag(Sig[0]))#
+                    a.append(-np.imag(Sig[i])/wl[i])
+            self.gamma = np.array(a)
         else:
             print("phbath.Gamma: self.sig is not set, need it to calculate gamma")
             sys.exit()
@@ -398,9 +398,9 @@ class phbath:
         print("WARNING: remember to reset t=0 to use the new noise!")
         print("phbath.gnoi:classical: %r" % self.classical)
         print("phbath.gnoi:including zero point motion:%r" % self.zpmotion)
-        self.noise = N.real(phnoise(self.gamma, self.gwl, self.T,
+        self.noise = np.real(phnoise(self.gamma, self.gwl, self.T,
                                     self.wmax, self.dt, self.nmd, self.classical, self.zpmotion))
-        # N.linspace(self.gwl[0],self.gwl[-1])
+        # np.linspace(self.gwl[0],self.gwl[-1])
 
     def gmem(self):
         '''
@@ -414,26 +414,26 @@ class phbath:
             self.kernel = self.gamma
         else:
             tl = [self.dt*i for i in range(self.ml)]
-            self.kernel = N.real(
+            self.kernel = np.real(
                 gamt(tl, self.wl, self.gwl, self.gamma, self.eta_ad))
             # update gamma to include artificial damping:
             if self.eta_ad != 0:
                 # print "TG test FFT was here"
-                #gamnew = N.zeros(self.kernel.shape)
+                #gamnew = np.zeros(self.kernel.shape)
                 #fti = myfft(self.dt,self.kernel.shape[0])
                 # for i in range(self.kernel.shape[1]):
                 #    for j in range(self.kernel.shape[2]):
                 #        gamnew[:,i,j]=(fti.Fourier1D(self.kernel[:,i,j])) #t->w, but only positive t!
-                # self.gamma=N.array(2*N.real(gamnew)) # Real since its really a cos-transform (kernel(-t)=kernel(t)).
-                gamnew = N.zeros(self.gamma.shape)
+                # self.gamma=np.array(2*np.real(gamnew)) # Real since its really a cos-transform (kernel(-t)=kernel(t)).
+                gamnew = np.zeros(self.gamma.shape)
                 for i in range(len(self.gwl)):
                     for it in range(self.kernel.shape[0]):
                         gamnew[i, :, :] = gamnew[i, :, :]+self.dt * \
-                            self.kernel[it, :, :]*N.cos(self.gwl[i]*tl[it])
-                # self.gamma=N.array(len(self.gwl)/self.kernel.shape[0]*N.real(gamnew)) # Real since its really a cos-transform (kernel(-t)=kernel(t)).
+                            self.kernel[it, :, :]*np.cos(self.gwl[i]*tl[it])
+                # self.gamma=np.array(len(self.gwl)/self.kernel.shape[0]*np.real(gamnew)) # Real since its really a cos-transform (kernel(-t)=kernel(t)).
                 self.gammaOld = self.gamma
                 # Real since its really a cos-transform (kernel(-t)=kernel(t)).2*self.gwl[i]*
-                self.gamma = N.array(N.real(gamnew))
+                self.gamma = np.array(np.real(gamnew))
                 # print "Test igen:",self.gamma.shape
 
     def bforce(self, t, phis, qhis):

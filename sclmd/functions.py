@@ -1,6 +1,6 @@
 import sys
 
-import numpy as N
+import numpy as np
 
 import sclmd.units as U
 
@@ -9,7 +9,7 @@ class myfft:
     def __init__(self, dt, n):
         self.dt = dt
         self.N = n
-        self.dw = 2*N.pi/dt/n
+        self.dw = 2*np.pi/dt/n
 
     def Fourier1D(self, a):
         """ 
@@ -26,8 +26,8 @@ class myfft:
             print("MyFFT.Fourier1D: array length error!")
             sys.exit(0)
         else:
-            nor = 2.*N.pi/self.dw
-            b = N.fft.ifft(a)
+            nor = 2.*np.pi/self.dw
+            b = np.fft.ifft(a)
             return nor*b
 
     def iFourier1D(self, a):
@@ -45,12 +45,12 @@ class myfft:
             print("MyFFT.iFourier1D: array length error!")
             sys.exit(0)
         else:
-            nor = self.dw/2/N.pi
-            b = N.fft.fft(a)
+            nor = self.dw/2/np.pi
+            b = np.fft.fft(a)
             return nor*b
 
 
-N.seterr(over="ignore")
+np.seterr(over="ignore")
 
 
 def coth(x):
@@ -61,7 +61,7 @@ def coth(x):
         print("coth:coth(0) is infinity")
         sys.exit(0)
     else:
-        return N.cosh(x)/N.sinh(x)
+        return np.cosh(x)/np.sinh(x)
 
 
 def xcoth(x):
@@ -71,7 +71,7 @@ def xcoth(x):
     if x == 0.0:
         return 1.0
     else:
-        return x*N.cosh(x)/N.sinh(x)
+        return x*np.cosh(x)/np.sinh(x)
 
 
 def bose(w, T):
@@ -81,7 +81,7 @@ def bose(w, T):
     #small = 10e-20
     if T == 0.0:
         if w == 0.0:
-            return 1/(N.exp(1.0/U.kb)-1)
+            return 1/(np.exp(1.0/U.kb)-1)
         elif w < 0.0:
             return -1.0
         else:
@@ -93,7 +93,7 @@ def bose(w, T):
             # return 0 seems solves it
             return 0.0
         else:
-            return 1.0/(N.exp(w/U.kb/T)-1.0)
+            return 1.0/(np.exp(w/U.kb/T)-1.0)
 
 
 def fermi(ep, mu, T):
@@ -108,7 +108,7 @@ def fermi(ep, mu, T):
         else:
             return 0.5
     else:
-        return 1/(N.exp((ep-mu)/U.kb/T)+1)
+        return 1/(np.exp((ep-mu)/U.kb/T)+1)
 
 
 def flinterp(x, xs, ys):
@@ -135,31 +135,31 @@ def nearest(b, bs):
     """
     return the index of the element in bs wich is the nearest to b.
     """
-    bsn = N.array(bs)
+    bsn = np.array(bs)
     bst = abs(bsn-b)
     return(list(bst).index(min(bst)))
 
 
 def rpadleft(bs, b):
     if len(bs) > 1:
-        return N.concatenate((N.array([b]), N.array(bs)[:-1]), axis=0)
+        return np.concatenate((np.array([b]), np.array(bs)[:-1]), axis=0)
     elif len(bs) == 1:
-        return N.array([b])
+        return np.array([b])
     else:
         print("len(bs) is less than 1")
         sys.exit()
 
 
 def mdot(* args):
-    return N.linalg.multi_dot([im for im in args])
+    return np.linalg.multi_dot([im for im in args])
 
 
 def chkShape(a):
     """
     check if a is a n by n matrix, if yes return n
     """
-    aa = N.array(a)
-    ash = N.shape(aa)
+    aa = np.array(a)
+    ash = np.shape(aa)
     if(ash[0] == ash[1]):
         return ash[0]
     else:
@@ -168,26 +168,26 @@ def chkShape(a):
 
 
 def symmetrize(a):
-    aa = N.array(a)
-    return 0.5*(aa+N.transpose(aa))
+    aa = np.array(a)
+    return 0.5*(aa+np.transpose(aa))
 
 
 def antisymmetrize(a):
-    aa = N.array(a)
-    return 0.5*(aa-N.transpose(aa))
+    aa = np.array(a)
+    return 0.5*(aa-np.transpose(aa))
 
 
 def dagger(a):
-    aa = N.array(a)
-    ash = N.shape(aa)
+    aa = np.array(a)
+    ash = np.shape(aa)
     if(ash[0] != ash[1]):
         print("Not sqaure matrix")
         sys.exit(0)
-    return N.transpose(N.conjugate(aa))
+    return np.transpose(np.conjugate(aa))
 
 
 def hermitianize(a):
-    aa = N.array(a)
+    aa = np.array(a)
     return 0.5*(aa+dagger(aa))
 
 
@@ -197,16 +197,16 @@ def powerspecq(qs, dt, nmd):
     dt      time step of MD simulation
     nmd     number of MD steps
     """
-    qst = N.transpose(N.array(qs))
+    qst = np.transpose(np.array(qs))
     nmd2 = qst.shape[1]
     if nmd != nmd2:
         print("power: qs shape error!")
         sys.exit()
-    dw = 2.*N.pi/dt/nmd
+    dw = 2.*np.pi/dt/nmd
 
-    qsw = N.array([myfft(dt, nmd).Fourier1D(a) for a in qst])
-    qsw = N.real(N.transpose(qsw*N.conjugate(qsw)))
-    return N.array([[i*dw, (dw*i)**2*N.sum(qsw[i])/dt/nmd] for i in range(nmd)])
+    qsw = np.array([myfft(dt, nmd).Fourier1D(a) for a in qst])
+    qsw = np.real(np.transpose(qsw*np.conjugate(qsw)))
+    return np.array([[i*dw, (dw*i)**2*np.sum(qsw[i])/dt/nmd] for i in range(nmd)])
 
 
 def powerspecp(ps, dt, nmd):
@@ -215,13 +215,13 @@ def powerspecp(ps, dt, nmd):
     dt      time step of MD simulation
     nmd     number of MD steps
     """
-    pst = N.transpose(N.array(ps))
+    pst = np.transpose(np.array(ps))
     nmd2 = pst.shape[1]
     if nmd != nmd2:
         print("power: ps shape error!")
         sys.exit()
-    dw = 2.*N.pi/dt/nmd
+    dw = 2.*np.pi/dt/nmd
 
-    psw = N.array([myfft(dt, nmd).Fourier1D(a) for a in pst])
-    psw = N.real(N.transpose(psw*N.conjugate(psw)))
-    return N.array([[i*dw, N.sum(psw[i])/dt/nmd] for i in range(nmd)])
+    psw = np.array([myfft(dt, nmd).Fourier1D(a) for a in pst])
+    psw = np.real(np.transpose(psw*np.conjugate(psw)))
+    return np.array([[i*dw, np.sum(psw[i])/dt/nmd] for i in range(nmd)])

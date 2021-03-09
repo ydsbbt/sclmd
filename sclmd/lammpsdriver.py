@@ -4,7 +4,7 @@
 import ctypes
 import sys
 
-import numpy as N
+import numpy as np
 from lammps import lammps
 
 from sclmd.tools import get_atomname
@@ -43,18 +43,18 @@ class lammpsdriver(lammps):
         #lines = open(self.infile, 'r').readlines()
         #for line in lines: self.command(line)
         self.commands_list(self.infile)
-        self.type = N.array(self.gather_atoms("type", 0, 1))
-        #self.mass = N.array(self.gather_atoms("mass",1,1))
+        self.type = np.array(self.gather_atoms("type", 0, 1))
+        #self.mass = np.array(self.gather_atoms("mass",1,1))
         self.mass = self.extract_atom("mass", 2)
         self.number = self.get_natoms()
         self.els = []
         for type in self.type:
             self.els.append(self.mass[type])
         self.xyz = self.gather_atoms("x", 1, 3)
-        self.conv = self.md2ang*N.array([3*[1.0/N.sqrt(mass)]
+        self.conv = self.md2ang*np.array([3*[1.0/np.sqrt(mass)]
                                          for mass in self.els]).flatten()
-        self.type = N.array(self.gather_atoms("type", 0, 1))
-        #self.mass = N.array(self.gather_atoms("mass",1,1))
+        self.type = np.array(self.gather_atoms("type", 0, 1))
+        #self.mass = np.array(self.gather_atoms("mass",1,1))
         self.axyz = []
         for i, a in enumerate(self.els):
             self.axyz.append([get_atomname(a), self.xyz[i*3],
@@ -73,11 +73,11 @@ class lammpsdriver(lammps):
     def absforce(self, q):
         self.scatter_atoms("x", 1, 3, self.newx(q))
         self.command("run 0")
-        return self.para*self.conv*N.array(self.gather_atoms("f", 1, 3))
+        return self.para*self.conv*np.array(self.gather_atoms("f", 1, 3))
 
     def initforce(self):
         print("Calculate zero displacement force")
-        self.f0 = self.absforce(N.zeros(3*self.number))
+        self.f0 = self.absforce(np.zeros(3*self.number))
 
     def force(self, q):
         return self.absforce(q) - self.f0

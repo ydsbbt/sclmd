@@ -4,7 +4,7 @@ import os
 import sys
 import time
 
-import numpy as N
+import numpy as np
 from netCDF4 import Dataset
 from numpy import linalg as LA
 from tqdm import tqdm
@@ -76,7 +76,7 @@ class md:
                 print("syslist out of range")
                 sys.exit(0)
             else:
-                self.syslist = N.array(syslist, dtype='int')
+                self.syslist = np.array(syslist, dtype='int')
             # number of system atoms
             self.na = len(syslist)
             # number of system degrees of freedom
@@ -84,7 +84,7 @@ class md:
         elif axyz is not None:
             # set using axyz
             # all are system atoms
-            self.syslist = N.array(range(len(axyz)), dtype='int')
+            self.syslist = np.array(range(len(axyz)), dtype='int')
             self.na = len(self.syslist)
             self.nph = 3*len(self.syslist)
         else:
@@ -108,7 +108,7 @@ class md:
         self.fhis = []
         self.fbaths = []
 
-        self.etot = N.zeros(nmd)
+        self.etot = np.zeros(nmd)
 
         # vars: dyn,hw,U,nph
         self.setDyn(dyn)
@@ -118,7 +118,7 @@ class md:
         self.md2ang = md2ang
         self.mass = []
         self.get_atommass()
-        self.conv = self.md2ang*N.array([3*[1.0/N.sqrt(mass)]
+        self.conv = self.md2ang*np.array([3*[1.0/np.sqrt(mass)]
                                          for mass in self.mass]).flatten()
 
     def get_atommass(self):
@@ -143,10 +143,10 @@ class md:
 
     def ResetSavepq(self):
         if self.savep and self.nmd is not None and self.nph is not None:
-            self.ps = N.zeros((self.nmd, self.nph))
-            self.power = N.zeros((self.nmd, 2))
+            self.ps = np.zeros((self.nmd, self.nph))
+            self.power = np.zeros((self.nmd, 2))
         if self.saveq and self.nmd is not None and self.nph is not None:
-            self.qs = N.zeros((self.nmd, self.nph))
+            self.qs = np.zeros((self.nmd, self.nph))
         print("md.save all momentum: %r" % self.savep)
         print("md.save all postions: %r" % self.saveq)
 
@@ -172,13 +172,13 @@ class md:
         # make sure we save enought memory for all the baths
         if(bath.ml > self.ml):
             self.ml = bath.ml
-        self.fbaths.append(N.zeros(self.nph))
+        self.fbaths.append(np.zeros(self.nph))
         # force history
-        self.fhis.append(N.zeros((self.nmd, self.nph)))
+        self.fhis.append(np.zeros((self.nmd, self.nph)))
 
     def AddPowerSection(self, atomlist):
         self.atomlist = atomlist
-        self.poweratomlist = N.empty((len(self.atomlist), self.nmd, 2))
+        self.poweratomlist = np.empty((len(self.atomlist), self.nmd, 2))
 
     def AddConstr(self, constr):
         self.constraint = constr
@@ -203,7 +203,7 @@ class md:
 
     def SetMD(self, dt, nmd):
         self.dt, self.nmd = dt, nmd
-        self.etot = N.zeros(nmd)
+        self.etot = np.zeros(nmd)
 
     def SetHarm(self, harmonic):
         self.harmonic = harmonic
@@ -211,7 +211,7 @@ class md:
     def SetXyz(self, axyz):
         if axyz is not None:
             print("md.SetXyz:Seting xyz and nta")
-            self.xyz = N.array([a[1:] for a in axyz], dtype='d').flatten()
+            self.xyz = np.array([a[1:] for a in axyz], dtype='d').flatten()
             self.els = [a[0] for a in axyz]
             self.nta = len(axyz)
         else:
@@ -221,7 +221,7 @@ class md:
 
     def SetSyslist(self, syslist):
         print("md.SetXyz:Seting syslist")
-        self.syslist = N.array(syslist)
+        self.syslist = np.array(syslist)
         # number of system atoms
         self.na = len(syslist)
         # number of system degrees of freedom
@@ -237,7 +237,7 @@ class md:
         """
         if dyn is not None:
             print("md.setDyn: getting dynamical matrix")
-            ndyn = N.array(dyn)
+            ndyn = np.array(dyn)
             print("md.setDyn: checking dynamical matrix")
             n = chkShape(ndyn)
             if self.nph is not None and self.nph != n:
@@ -258,9 +258,9 @@ class md:
                     else:
                         avn[i] = av[i]
                 av = avn
-            self.hw = N.array(list(map(N.real, list(map(N.sqrt, av)))))
-            self.U = N.array(au)
-            self.dyn = mdot(self.U, N.diag(N.array(av)), N.transpose(self.U))
+            self.hw = np.array(list(map(np.real, list(map(np.sqrt, av)))))
+            self.U = np.array(au)
+            self.dyn = mdot(self.U, np.diag(np.array(av)), np.transpose(self.U))
             # if min(av)>=0:
             #    print "the dynmat should not change much"
             #    print "max diff. of dynmatrix:", abs(self.dyn-ndyn).sum()
@@ -282,16 +282,16 @@ class md:
             print("md.initial: no dynamical matrix")
             # sys.exit()
             print("p,q set to 0")
-            self.p = N.zeros(self.nph)
-            self.q = N.zeros(self.nph)
-            self.pinit = N.zeros(self.nph)
-            self.qinit = N.zeros(self.nph)
+            self.p = np.zeros(self.nph)
+            self.q = np.zeros(self.nph)
+            self.pinit = np.zeros(self.nph)
+            self.qinit = np.zeros(self.nph)
         else:
             av = self.hw
             au = self.U
 
-            dis = N.zeros(len(av))
-            vel = N.zeros(len(av))
+            dis = np.zeros(len(av))
+            vel = np.zeros(len(av))
             for i in range(len(av)):
                 # cutoff energy 0.005 eV
                 # do not initialise motion due to slow modes
@@ -300,9 +300,9 @@ class md:
                     am = 0.0
                 else:
                     am = ((bose(av[i], self.T)+0.5)*2.0/av[i])**0.5
-                r = N.random.rand()
-                dis = dis + au[:, i]*am*N.cos(2.*N.pi*r)
-                vel = vel - av[i]*au[:, i]*am*N.sin(2.*N.pi*r)
+                r = np.random.rand()
+                dis = dis + au[:, i]*am*np.cos(2.*np.pi*r)
+                vel = vel - av[i]*au[:, i]*am*np.sin(2.*np.pi*r)
 
                 dis = ApplyConstraint(dis, self.constraint)
                 vel = ApplyConstraint(vel, self.constraint)
@@ -317,8 +317,8 @@ class md:
         set history list of the friction kernel to zeros
         """
         if self.nph is not None and self.ml is not None:
-            self.qhis = N.zeros((self.ml, self.nph))
-            self.phis = N.zeros((self.ml, self.nph))
+            self.qhis = np.zeros((self.ml, self.nph))
+            self.phis = np.zeros((self.ml, self.nph))
         else:
             print("self.nph and self.ml are not set")
             sys.exit()
@@ -347,7 +347,7 @@ class md:
             self.qs[t % self.nmd] = q
 
         # total energy
-        #self.etot = N.append(self.etot,self.energy())
+        #self.etot = np.append(self.etot,self.energy())
         self.etot[t % self.nmd] = self.energy()
 
         # update history here
@@ -361,7 +361,7 @@ class md:
 
         # evaluate current
         for i in range(len(self.baths)):
-            # self.baths[i].cur=N.append(self.baths[i].cur,mdot(self.fbaths[i],p))
+            # self.baths[i].cur=np.append(self.baths[i].cur,mdot(self.fbaths[i],p))
             self.baths[i].cur[t % self.nmd] = mdot(self.fbaths[i], p)
             self.fhis[i][t % self.nmd] = self.fbaths[i]
 
@@ -519,7 +519,7 @@ class md:
                 # noise generation
                 for i in range(len(self.baths)):  # loop over baths
                     self.baths[i].gnoi()
-                    # print N.shape(self.baths[i].noise)
+                    # print np.shape(self.baths[i].noise)
                     # stppp
 
                 # reset qs and ps to zero
@@ -527,7 +527,7 @@ class md:
 
             # loop over md steps
             ipie1 = ipie+1
-            iss = ipie1+N.array(range(self.npie-ipie1))
+            iss = ipie1+np.array(range(self.npie-ipie1))
             trajfile = open('trajectories'+"."+str(self.T) +
                             "."+"run"+str(j)+'.ani', 'w')
             for i in iss:
@@ -536,8 +536,8 @@ class md:
                     self.vv(j)
                     if self.nstep is not None and ((self.t-1) == 0 or (self.t-1) % self.nstep == 0):
                         #head = str(len(self.els))+'\n'+str(self.t-1)+'\n'
-                        # N.savetxt(trajfile, N.column_stack((
-                        #    self.els, N.transpose(N.reshape(self.xyz+self.conv*self.q,(3,len(self.els))))[:], N.transpose(N.reshape(self.f,(3,len(self.els))))[:])), header=head)
+                        # np.savetxt(trajfile, np.column_stack((
+                        #    self.els, np.transpose(np.reshape(self.xyz+self.conv*self.q,(3,len(self.els))))[:], np.transpose(np.reshape(self.f,(3,len(self.els))))[:])), header=head)
                         trajfile.write(str(len(
                             self.els))+'\n'+str(self.t-1)+'\n')
                         structure = self.xyz+self.conv*self.q
@@ -549,11 +549,11 @@ class md:
 
             if self.savep:
                 # power spectrum
-                power = N.copy(self.power)
+                power = np.copy(self.power)
                 if self.atomlist is not None:
                     poweratomlist = [None]*len(self.atomlist)
                     for layers in range(len(self.atomlist)):
-                        poweratomlist[layers] = N.copy(
+                        poweratomlist[layers] = np.copy(
                             self.poweratomlist[layers])
                 self.GetPower()
                 self.power = (power*(j-self.nstart)+self.power) / \
@@ -606,7 +606,7 @@ class md:
                           str(ii)+".run"+str(j)+".dat", "w")
                 # write average current
                 fk.write("%i %f    %f \n" %
-                         (j, self.T, N.mean(self.baths[ii].cur)*U.curcof))
+                         (j, self.T, np.mean(self.baths[ii].cur)*U.curcof))
                 fk.close()
             if self.saveq:
                 # save average structure
@@ -705,7 +705,7 @@ def Write2NetCDFFile(file, var, varLabel, dimensions, units=None, description=No
 def ReadNetCDFVar(file, var):
     print("ReadNetCDFFile: reading " + var)
     f = Dataset(file, 'r')
-    vv = N.array(f.variables[var])
+    vv = np.array(f.variables[var])
     f.close()
     return vv
 
@@ -714,8 +714,8 @@ def sameq(q1, q2):
     if(len(q1) != len(q2)):
         # print "sameq: qq1 and qq2 not same length"
         return False
-    qq1 = N.array(q1)
-    qq2 = N.array(q2)
+    qq1 = np.array(q1)
+    qq2 = np.array(q2)
     dif = qq1-qq2
     # if the difference is less than 10e-10
     # use the old force
@@ -734,7 +734,7 @@ def ApplyConstraint(f, constr=None):
     """
     if constr is None:
         return f
-    nf = N.array(f)*1.0
+    nf = np.array(f)*1.0
     for i in range(len(constr)):
         nf[constr[i]] = 0
     return nf
@@ -791,8 +791,8 @@ if __name__ == "__main__":
     # unit in 0.658211814201041 fs
     damp = 100/0.658211814201041
 
-    etal = (1.0/damp)*N.identity(len(ecatsl), N.float)
-    etar = (1.0/damp)*N.identity(len(ecatsr), N.float)
+    etal = (1.0/damp)*np.identity(len(ecatsl), np.float)
+    etar = (1.0/damp)*np.identity(len(ecatsr), np.float)
     # atom indices that are connecting to bath
     ebl = ebath(ecatsl, T*(1+delta/2), mdrun.dt, mdrun.nmd,
                 wmax=1., nw=500, bias=0.0, efric=etal, classical=False, zpmotion=True)
