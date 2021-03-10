@@ -130,7 +130,7 @@ class bpt:
 
     def retargf(self, omega):
         # retarded Green function
-        return np.linalg.inv(omega*omega*np.identity(len(self.dynmat))-self.dynmat-self.selfenergy(omega, self.dofatomofbath[0])-self.selfenergy(omega, self.dofatomofbath[1]))
+        return np.linalg.inv((omega+1j*1e-3)*(omega+1j*1e-3)*np.identity(len(self.dynmat))-self.dynmat-self.selfenergy(omega, self.dofatomofbath[0])-self.selfenergy(omega, self.dofatomofbath[1]))
 
     def gamma(self, Pi):
         return -1j*(Pi-Pi.conjugate().transpose())

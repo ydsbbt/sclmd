@@ -22,6 +22,7 @@ delta = 0.1
 thermalconductance = []
 for temp in T:
     thermalconductance.append([temp, mybpt.thermalconductance(temp, delta)])
+mybpt.getps(300, 0.5, 1000)
 np.savetxt('thermalconductance.dat', thermalconductance)
 plt.figure(5)
 plt.plot(np.array(thermalconductance)[

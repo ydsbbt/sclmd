@@ -29,10 +29,10 @@ class md:
         nmd         len of md simulation
         na          number of system atoms
         nph         number of system degrees of freedom
-        dyn         dynamical matrix of the system
+        dyn         dynamical matrix of the system unit in eV^2
         harmonic    how to calculate the potential force: harmonic approximation
                     or siesta
-        T           Average temperature
+        T           Average temperature unit in K
         saveq       whether to save md trajectories
         savep       whether to save md trajectories
         ml          length of memory kernel (max(all baths))
@@ -115,7 +115,7 @@ class md:
         self.setDyn(dyn)
 
         # var: ps,qs,power
-        self.ResetSavepq()
+        # self.ResetSavepq()
         self.md2ang = md2ang
         self.mass = []
         self.get_atommass()
@@ -137,7 +137,8 @@ class md:
         print("MD number of steps:"+str(self.nmd))
         print("MD memory kernel length:"+str(self.ml))
         print("Number of baths attached:"+str(len(self.baths))+"\n")
-
+        print("md.save all momentum: %r" % self.savep)
+        print("md.save all postions: %r" % self.saveq)
         # if self.dyn is None:
         #    print("md.info: No dynamical matrix input")
         # sys.exit()
@@ -148,8 +149,6 @@ class md:
             self.power = np.zeros((self.nmd, 2))
         if self.saveq and self.nmd is not None and self.nph is not None:
             self.qs = np.zeros((self.nmd, self.nph))
-        print("md.save all momentum: %r" % self.savep)
-        print("md.save all postions: %r" % self.saveq)
 
     # def energy(self):
     #    return 0.5*mdot(self.p,self.p)+0.5*mdot(self.q,self.dyn,self.q)
@@ -250,8 +249,6 @@ class md:
 
             av, au = LA.eigh(self.dyn)
             if min(av) < 0:
-                print("md.setDyn: there are negative frequencies")
-                print("md.setDyn: I will remove them")
                 avn = 0.*av
                 for i in range(len(av)):
                     if av[i] < 0:
@@ -259,6 +256,7 @@ class md:
                     else:
                         avn[i] = av[i]
                 av = avn
+                print("md.setDyn: Negative frequencies removed")
             self.hw = np.array(list(map(np.real, list(map(np.sqrt, av)))))
             self.U = np.array(au)
             self.dyn = mdot(self.U, np.diag(
