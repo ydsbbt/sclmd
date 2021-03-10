@@ -424,7 +424,7 @@ class md:
         #     sys.exit()
 
         # search for possible drivers
-        if self.potforce is not None:
+        if self.pforce is not None:
             f = self.pforce.force(q)
         # use dynamical matrix
         elif self.dyn is not None:

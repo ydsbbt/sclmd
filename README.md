@@ -23,23 +23,22 @@ else
     git clone https://github.com/lammps/lammps.git -b stable
 fi
 echo 'Activate Intel compilation environment'
-source /opt/intel/parallel_studio_xe_2020/psxevars.sh
+source source /opt/intel/oneapi/setvars.sh
 cd lammps/src
 echo 'Install select packages'
 make yes-body yes-class2 yes-manybody yes-molecule yes-kspace yes-user-reaxc yes-user-phonon
 echo 'Compile LAMMPS shared library'
-make -j 8 mode=shlib intel_cpu
+make -j 8 intel_cpu_intelmpi mode=shlib
 echo 'Install LAMMPS shared library in python'
 make install-python
 echo 'Compile the LAMMPS executable file'
-make -j 8 intel_cpu
+make -j 8 intel_cpu_intelmpi
 echo 'Install required python packages'
-python -m pip install -U numpy netCDF4 tqdm
+python -m pip install -U sclmd
 ```
 
-## Input files
+## Examples
 
 examples/runmd.py: calculate thermal conductance of single molecular junction with quantum thermal bath molecular dynmics.
-examples/runnegf.py: calculate thermal conductance of single molecular junction with none equilibrium Green' s function.
 
-## Output files
+examples/runnegf.py: calculate thermal conductance of single molecular junction with none equilibrium Green' s function.
