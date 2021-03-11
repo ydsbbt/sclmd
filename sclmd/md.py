@@ -136,7 +136,7 @@ class md:
         print("MD time step:"+str(self.dt))
         print("MD number of steps:"+str(self.nmd))
         print("MD memory kernel length:"+str(self.ml))
-        print("Number of baths attached:"+str(len(self.baths))+"\n")
+        print("Number of baths attached:"+str(len(self.baths)))
         print("md.save all momentum: %r" % self.savep)
         print("md.save all postions: %r" % self.saveq)
         # if self.dyn is None:
@@ -236,27 +236,29 @@ class md:
         set up the dynamical matrix of the system
         """
         if dyn is not None:
-            print("md.setDyn: getting dynamical matrix")
+            print("md.setDyn: setting dynamical matrix")
             ndyn = np.array(dyn)
-            print("md.setDyn: checking dynamical matrix")
+            #print("md.setDyn: checking dynamical matrix")
             n = chkShape(ndyn)
             if self.nph is not None and self.nph != n:
                 print("md.setDyn: the dimension of dynamical matrix is wrong")
                 sys.exit(0)
             self.nph = n
-            print("md.setDyn: symmetrizing dynamical matrix")
+            #print("md.setDyn: symmetrizing dynamical matrix")
             self.dyn = symmetrize(ndyn)
 
             av, au = LA.eigh(self.dyn)
             if min(av) < 0:
                 avn = 0.*av
+                conut = 0
                 for i in range(len(av)):
                     if av[i] < 0:
                         avn[i] = 0.
+                        conut += 1
                     else:
                         avn[i] = av[i]
                 av = avn
-                print("md.setDyn: Negative frequencies removed")
+                print("md.setDyn: "+str(conut)+" negative frequencies removed")
             self.hw = np.array(list(map(np.real, list(map(np.sqrt, av)))))
             self.U = np.array(au)
             self.dyn = mdot(self.U, np.diag(
@@ -311,6 +313,10 @@ class md:
             self.q = dis
             self.pinit = vel
             self.qinit = dis
+            self.p = np.zeros(self.nph)
+            self.q = np.zeros(self.nph)
+            self.pinit = np.zeros(self.nph)
+            self.qinit = np.zeros(self.nph)
 
     def ResetHis(self):
         """
