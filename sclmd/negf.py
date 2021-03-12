@@ -93,18 +93,21 @@ class bpt:
             (self.tmnumber[:, 0]*self.rpc, self.tmnumber[:, 1])))
         print('Transmission saved')
 
-    def getps(self, T, maxomega, intnum, vector=False):
+    def getps(self, T, maxomega, intnum, atomlist=None, vector=False):
         print('Calculate power spectrum at '+str(T)+'K')
+        if atomlist is None:
+            print("Power spectrum of all atoms")
+            atomlist = np.array(range(0, len(self.dynmat))) + len(self.dofatomfixed[0])
         x2 = np.linspace(0, maxomega/self.rpc, intnum+1)
         if vector:
             function = np.vectorize(self.ps)
             self.psnumber = np.array(
-                np.column_stack((x2, np.array(function(x2, T)))))
+                np.column_stack((x2, np.array(function(x2, T, atomlist)))))
         else:
             from tqdm import tqdm
             ps = []
             for var in tqdm(x2, unit="steps", mininterval=1):
-                ps.append(self.ps(var, T))
+                ps.append(self.ps(var, T, atomlist))
             self.psnumber = np.array(np.column_stack((x2, np.array(ps))))
         np.savetxt('powerspectrum.'+str(T)+'.dat', np.column_stack(
             (self.psnumber[:, 0]*self.rpc, self.psnumber[:, 1])))
@@ -130,7 +133,7 @@ class bpt:
 
     def retargf(self, omega):
         # retarded Green function
-        return np.linalg.inv((omega+1j*1e-3)*(omega+1j*1e-3)*np.identity(len(self.dynmat))-self.dynmat-self.selfenergy(omega, self.dofatomofbath[0])-self.selfenergy(omega, self.dofatomofbath[1]))
+        return np.linalg.inv((omega+1j*1e-2)**2*np.identity(len(self.dynmat))-self.dynmat-self.selfenergy(omega, self.dofatomofbath[0])-self.selfenergy(omega, self.dofatomofbath[1]))
 
     def gamma(self, Pi):
         return -1j*(Pi-Pi.conjugate().transpose())
@@ -146,9 +149,10 @@ class bpt:
         else:
             return 1/(np.exp(self.rpc*omega/self.bc/T)-1)
 
-    def ps(self, omega, T):
+    def ps(self, omega, T, atomlist):
         # Power spectrum of selected atoms
-        return -1*self.bosedist(omega, T)*np.trace(np.imag(self.retargf(omega)))
+        dofatomse = np.array(atomlist)-len(self.dofatomfixed[0])
+        return -2*omega**2*self.bosedist(omega, T)*np.trace(np.imag(self.retargf(omega)[dofatomse][:, dofatomse]))
 
     def tm(self, omega):
         # Transmission

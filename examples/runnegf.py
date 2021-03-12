@@ -13,6 +13,7 @@ lammpsinfile = [
 time_start = time.time()
 atomfixed = [range(0*3, (19+1)*3), range(181*3, (200+1)*3)]
 atomofbath = [range(20*3, (69+1)*3), range(131*3, (180+1)*3)]
+atomofcenter = [range(70*3,(130+1)*3)]
 mybpt = bpt(lammpsinfile, 0.25, 0.1, atomofbath, atomfixed, 100)
 mybpt.plotresult()
 # T_H/C = T*(1±delta/2)
@@ -22,7 +23,7 @@ delta = 0.1
 thermalconductance = []
 for temp in T:
     thermalconductance.append([temp, mybpt.thermalconductance(temp, delta)])
-mybpt.getps(300, 0.5, 1000)
+    mybpt.getps(temp, 0.5, 1000) 
 np.savetxt('thermalconductance.dat', thermalconductance)
 plt.figure(5)
 plt.plot(np.array(thermalconductance)[
