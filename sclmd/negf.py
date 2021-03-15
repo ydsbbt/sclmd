@@ -5,8 +5,6 @@ import sys
 import numpy as np
 from lammps import lammps
 
-from sclmd.tools import get_atomname
-
 
 class bpt:
     # Use NEGF to calculate ballistic phonon transport
@@ -23,7 +21,6 @@ class bpt:
         self.dofatomfixed = dofatomfixed
         self.dofatomofbath = dofatomofbath
         self.getdynmat()
-        self.write_v_sim()
         self.gettm(vector)
 
     def getdynmat(self):
@@ -97,7 +94,8 @@ class bpt:
         print('Calculate power spectrum at '+str(T)+'K')
         if atomlist is None:
             print("Power spectrum of all atoms")
-            atomlist = np.array(range(0, len(self.dynmat))) + len(self.dofatomfixed[0])
+            atomlist = np.array(range(0, len(self.dynmat))
+                                ) + len(self.dofatomfixed[0])
         x2 = np.linspace(0, maxomega/self.rpc, intnum+1)
         if vector:
             function = np.vectorize(self.ps)
@@ -191,6 +189,7 @@ class bpt:
         return self.thermalcurrent(T, delta)/(T*delta)
 
     def write_v_sim(self, filename="anime.ascii"):
+        from sclmd.tools import get_atomname
         # TODO: Not completely accurate in box setting & eigvecs
         text = "# Generated file for v_sim 3.7\n"
         text += "%15.9f%15.9f%15.9f\n" % (
