@@ -146,7 +146,6 @@ class md:
     def ResetSavepq(self):
         if self.savep and self.nmd is not None and self.nph is not None:
             self.ps = np.zeros((self.nmd, self.nph))
-            self.power = np.zeros((self.nmd, 2))
         if self.saveq and self.nmd is not None and self.nph is not None:
             self.qs = np.zeros((self.nmd, self.nph))
 
@@ -185,6 +184,7 @@ class md:
 
     def CalPowerSpec(self, cal=True):
         self.savep = cal
+        self.power = np.empty((self.nmd, 2))
 
     def CalAveStruct(self, cal=True):
         self.saveq = cal
