@@ -90,7 +90,7 @@ class bpt:
             (self.tmnumber[:, 0]*self.rpc, self.tmnumber[:, 1])))
         print('Transmission saved')
 
-    def getps(self, T, maxomega, intnum, atomlist=None, vector=False):
+    def getps(self, T, maxomega, intnum, atomlist=None, filename=None, vector=False):
         print('Calculate power spectrum at '+str(T)+'K')
         if atomlist is None:
             print("Power spectrum of all atoms")
@@ -107,8 +107,12 @@ class bpt:
             for var in tqdm(x2, unit="steps", mininterval=1):
                 ps.append(self.ps(var, T, atomlist))
             self.psnumber = np.array(np.column_stack((x2, np.array(ps))))
-        np.savetxt('powerspectrum.'+str(T)+'.dat', np.column_stack(
-            (self.psnumber[:, 0]*self.rpc, self.psnumber[:, 1])))
+        if filename is not None:
+            np.savetxt('powerspectrum.'+str(filename)+'.'+str(T)+'.dat',
+                       np.column_stack((self.psnumber[:, 0]*self.rpc, self.psnumber[:, 1])))
+        else:
+            np.savetxt('powerspectrum.'+str(T)+'.dat',
+                       np.column_stack((self.psnumber[:, 0]*self.rpc, self.psnumber[:, 1])))
         print('Power spectrum saved')
 
     def selfenergy(self, omega, dofatoms):
