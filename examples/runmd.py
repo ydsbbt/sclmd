@@ -57,6 +57,7 @@ mdrun.AddBath(ebr)
 
 mdrun.AddConstr(fixatoms)
 
+# mdrun.noranvel()
 # mdrun.CalPowerSpec()
 # mdrun.AddPowerSection([ecatsl, slist, ecatsr])
 # mdrun.CalAveStruct()

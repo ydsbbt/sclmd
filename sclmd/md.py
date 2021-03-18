@@ -53,11 +53,11 @@ class md:
         rmnc        Remove NC files after calculation
     """
 
-    def __init__(self, dt, nmd, T, syslist=None, axyz=None, harmonic=False, dyn=None, nstart=0, nstop=1, npie=1, md2ang=0.06466):
+    def __init__(self, dt, nmd, T, syslist=None, axyz=None, dyn=None, nstart=0, nstop=1, npie=1, md2ang=0.06466):
         self.nstart = nstart
         self.nstop = nstop
         self.dt, self.nmd = dt, nmd
-        self.harmonic = harmonic
+        # self.harmonic = harmonic
         self.T = T
         self.npie = npie
         self.saveall = False
@@ -112,6 +112,7 @@ class md:
         self.etot = np.zeros(nmd)
 
         # vars: dyn,hw,U,nph
+        self.initranvel = True
         self.setDyn(dyn)
 
         # var: ps,qs,power
@@ -205,8 +206,11 @@ class md:
         self.dt, self.nmd = dt, nmd
         self.etot = np.zeros(nmd)
 
-    def SetHarm(self, harmonic):
-        self.harmonic = harmonic
+    # def SetHarm(self, harmonic):
+    #     self.harmonic = harmonic
+
+    def noranvel(self, rf=False):
+        self.initranvel = rf
 
     def SetXyz(self, axyz):
         if axyz is not None:
@@ -309,14 +313,15 @@ class md:
                 dis = ApplyConstraint(dis, self.constraint)
                 vel = ApplyConstraint(vel, self.constraint)
 
-            self.p = vel
             self.q = dis
-            self.pinit = vel
             self.qinit = dis
-            self.p = np.zeros(self.nph)
-            self.q = np.zeros(self.nph)
-            self.pinit = np.zeros(self.nph)
-            self.qinit = np.zeros(self.nph)
+            if not self.initranvel:
+                print("Not set init velocity")
+                self.p = np.zeros(self.nph)
+                self.pinit = np.zeros(self.nph)
+            else:
+                self.p = vel
+                self.pinit = vel
 
     def ResetHis(self):
         """
@@ -808,6 +813,7 @@ if __name__ == "__main__":
     mdrun.AddBath(ebr)
 
     mdrun.AddConstr(fixatoms)
+    # mdrun.noranvel()
     # mdrun.CalPowerSpec()
     # mdrun.AddPowerSection([ecatsl, slist, ecatsr])
     # mdrun.CalAveStruct()
