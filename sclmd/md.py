@@ -313,15 +313,17 @@ class md:
                 dis = ApplyConstraint(dis, self.constraint)
                 vel = ApplyConstraint(vel, self.constraint)
 
-            self.q = dis
-            self.qinit = dis
             if not self.initranvel:
-                print("Not set init velocity")
+                print("Not set init displacement & velocity")
                 self.p = np.zeros(self.nph)
                 self.pinit = np.zeros(self.nph)
+                self.q = np.zeros(self.nph)
+                self.qinit = np.zeros(self.nph)
             else:
                 self.p = vel
                 self.pinit = vel
+                self.q = dis
+                self.qinit = dis
 
     def ResetHis(self):
         """
