@@ -8,7 +8,7 @@ from lammps import lammps
 
 class bpt:
     # Use NEGF to calculate ballistic phonon transport
-    def __init__(self, infile, maxomega, damp, dofatomofbath, dofatomfixed=[[], []], num=1000, vector=False):
+    def __init__(self, infile, maxomega, damp, dofatomofbath, dofatomfixed=[[], []], dynmatfile=None, num=1000, vector=False):
         print('Class init')
         # reduced Planck constant unit in: eV*ps
         self.rpc = 6.582119569e-4
@@ -20,6 +20,7 @@ class bpt:
         self.intnum = num
         self.dofatomfixed = dofatomfixed
         self.dofatomofbath = dofatomofbath
+        self.dynmatfile = dynmatfile
         self.getdynmat()
         self.gettm(vector)
 
@@ -28,8 +29,6 @@ class bpt:
         #lmp = lammps(cmdargs=['-screen', 'none', '-log', 'none'])
         print('LAMMPS init')
         lmp.commands_list(self.infile)
-        print('Calculate dynamical matrix')
-        lmp.command('dynamical_matrix all eskm 0.000001 file dynmat.dat')
         self.natoms = lmp.get_natoms()
         box = lmp.extract_box()
         self.boxlo = np.array(box[0])
@@ -47,14 +46,21 @@ class bpt:
         self.xyz = np.delete(self.xyz, self.dofatomfixed[0])
         self.xyz = np.delete(self.xyz, [
             dof-len(self.dofatomfixed[0]) for dof in self.dofatomfixed[1]])
+        if self.dynmatfile is None:
+            print('Calculate dynamical matrix')
+            lmp.command('dynamical_matrix all eskm 0.000001 file dynmat.dat')
+            dynmatdat = np.loadtxt('dynmat.dat')
+        else:
+            print('Load dynamical matrix from '+str(self.dynmatfile))
+            dynmatdat = np.loadtxt(self.dynmatfile)
         lmp.close()
-        print('Calculate angular frequency')
-
         self.dynmat = []
         self.omegas = []
         self.doffreeatom = 0
-        dynmatdat = np.loadtxt('dynmat.dat')
         dynlen = int(3*np.sqrt(len(dynmatdat)/3))
+        if dynlen != self.natoms*3:
+            print('System DOF test failed after load dynmat, check again')
+            sys.exit()
         self.dynmat = dynmatdat.reshape((dynlen, dynlen))
         self.dynmat = np.delete(self.dynmat, self.dofatomfixed[0], axis=0)
         self.dynmat = np.delete(self.dynmat, self.dofatomfixed[0], axis=1)
@@ -62,6 +68,10 @@ class bpt:
                                 dof-len(self.dofatomfixed[0]) for dof in self.dofatomfixed[1]], axis=0)
         self.dynmat = np.delete(self.dynmat, [
                                 dof-len(self.dofatomfixed[0]) for dof in self.dofatomfixed[1]], axis=1)
+        if len(self.xyz) != len(self.dynmat):
+            print('System DOF test failed after atoms reduced, check again')
+            sys.exit()
+        print('Calculate angular frequency')
         eigvals, self.eigvecs = np.linalg.eigh(self.dynmat)
         for i, val in enumerate(eigvals):
             if val > 0:
