@@ -101,7 +101,10 @@ class bpt:
         print('Transmission saved')
 
     def getps(self, T, maxomega, intnum, atomlist=None, filename=None, vector=False):
-        print('Calculate power spectrum at '+str(T)+'K')
+        if filename is not None:
+            print('Calculate power spectrum at '+str(T)+'K of'+str(filename))
+        else:
+            print('Calculate power spectrum at '+str(T)+'K')
         if atomlist is None:
             print("Power spectrum of all atoms")
             atomlist = np.array(range(0, len(self.dynmat))
@@ -145,7 +148,7 @@ class bpt:
 
     def retargf(self, omega):
         # retarded Green function
-        return np.linalg.inv((omega+1j*1e-2)**2*np.identity(len(self.dynmat))-self.dynmat-self.selfenergy(omega, self.dofatomofbath[0])-self.selfenergy(omega, self.dofatomofbath[1]))
+        return np.linalg.inv((omega+1e-6j)**2*np.identity(len(self.dynmat))-self.dynmat-self.selfenergy(omega, self.dofatomofbath[0])-self.selfenergy(omega, self.dofatomofbath[1]))
 
     def gamma(self, Pi):
         return -1j*(Pi-Pi.conjugate().transpose())
