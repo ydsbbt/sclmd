@@ -468,12 +468,12 @@ class md:
 
         # loop over independent md runs
         for j in range(self.nstart, self.nstop):
-            print("MD run: "+str(j)+"\n")
+            print("\n"+"MD run: "+str(j))
             fn = "MD"+str(j)+".nc"
             fnm = "MD"+str(j-1)+".nc"
 
             if os.path.isfile(fn):
-                print("find file: "+fn+"\n")
+                print("find file: "+fn)
                 ipie = int(ReadNetCDFVar(fn, 'ipie')[0])
                 if(ipie+1 < self.npie):
                     print("unfinished run")
