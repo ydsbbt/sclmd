@@ -3,3 +3,7 @@ dist
 *.egg-info
 __pycache__
 clean.sh
+*.dat
+*.ani
+*.nc
+log.lammps
