@@ -120,6 +120,9 @@ class md:
         self.md2ang = md2ang
         self.mass = []
         self.get_atommass()
+        if len(self.mass) != len(self.els):
+            print("Wrong setting in els or mass")
+            sys.exit(0)
         self.conv = self.md2ang*np.array([3*[1.0/np.sqrt(mass)]
                                           for mass in self.mass]).flatten()
 

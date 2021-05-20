@@ -2,10 +2,10 @@
 # -*- coding:utf-8 _*-
 from setuptools import setup, find_packages
 
-VERSION = '0.2.1'
+VERSION = '0.2.2'
 
 setup(
-    name='sclmd',
+    name='scmd',
     version=VERSION,
     description='Semi-classical Langevin molecular dynamics',
     long_description='Molecular dynamics script using a semi-classical generalized Langevin equation',
