@@ -23,7 +23,7 @@ else
     git clone https://github.com/lammps/lammps.git -b stable
 fi
 echo 'Activate Intel compilation environment'
-source source /opt/intel/oneapi/setvars.sh
+source /opt/intel/oneapi/setvars.sh
 cd lammps/src
 echo 'Select LAMMPS packages'
 make yes-body yes-class2 yes-manybody yes-molecule yes-kspace yes-user-reaxc yes-user-phonon
@@ -39,6 +39,6 @@ python -m pip install -U sclmd
 
 ## Examples
 
-examples/runmd.py: calculate thermal conductance of single molecular junction with quantum thermal bath molecular dynmics.
+* **examples/runmd.py**: Calculate thermal conductance of single molecular junction with quantum thermal bath molecular dynmics.
 
-examples/runnegf.py: calculate thermal conductance of single molecular junction with none equilibrium Green' s function.
+* **examples/runnegf.py**: Calculate thermal conductance of single molecular junction with none equilibrium Green' s function.

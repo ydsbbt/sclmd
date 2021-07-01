@@ -758,11 +758,11 @@ def ApplyConstraint(f, constr=None):
 
 if __name__ == "__main__":
     import time
-    import numpy as N
-    from baths import ebath
-    from tools import calHF, calTC
-    from lammpsdriver import lammpsdriver
-    from md import md
+    import numpy as np
+    from sclmd.baths import ebath
+    from sclmd.tools import calHF, calTC
+    from sclmd.lammpsdriver import lammpsdriver
+    from sclmd.md import md
 
     lammpsinfile = [
         #"log none",
