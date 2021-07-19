@@ -95,14 +95,16 @@ def calTC(delta, dlist=1):
                     for line in f:
                         kb[i][j] = line.split()[2]
 #                        temperture=float(line.split()[1])
-    kappa = (kb[0]-kb[1])/2/(delta*temperture)
-    kappa = np.delete(kappa, dlist)
-    # for i in range(len(kappa)):
-    #    kappa[i]=np.mean(kappa[0:i+1])
+    if  delta != 0:
+        kappa = (kb[0]-kb[1])/2/(delta*temperture)
+        kappa = np.delete(kappa, dlist)
+        # for i in range(len(kappa)):
+        #    kappa[i]=np.mean(kappa[0:i+1])
 
-    np.savetxt('thermalconductance.'+str(int(temperture))+'.dat',
+        np.savetxt('thermalconductance.'+str(int(temperture))+'.dat',
                (np.mean(kappa), np.std(kappa)), header="Mean Std")
-
+    else:
+        print("delta=0, no thermal conductance calculated.")
 
 def get_atomname(mass):
     """
