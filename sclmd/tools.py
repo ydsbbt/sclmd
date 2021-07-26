@@ -49,10 +49,10 @@ def calHF(dlist=1):
                 temperture = float(line.split()[1])
 
     dlist = list(range(dlist))
-    times = int(len(glob.glob('kappa.*.bath*.run*.dat'))/2)
+    times = int(len(glob.glob('kappa.*.bath0.run*.dat')))
     kb = np.empty([2, times])
 
-    for i in range(2):
+    for i in range(2):  
         for j in range(times):
             kappafile = "kappa." + \
                 str(int(temperture))+".bath"+str(i)+".run"+str(j)+".dat"
