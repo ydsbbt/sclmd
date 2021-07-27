@@ -71,7 +71,8 @@ def calHF(dlist=1):
         (balancekb[0], balancekb[1], (balancekb[0]-balancekb[1])/2)), header="Bath0 Bath1 heatflux")
 
 
-def calTC(delta, dlist=1):
+def calTC(delta, dlist=1, L=None, A=None):
+    # L，A units in Angstrom and Angstrom**2, respectively
     import glob
 
     # calculate thermal conductance
@@ -102,7 +103,9 @@ def calTC(delta, dlist=1):
         #    kappa[i]=np.mean(kappa[0:i+1])
 
         np.savetxt('thermalconductance.'+str(int(temperture))+'.dat',
-               (np.mean(kappa), np.std(kappa)), header="Mean Std")
+               (np.mean(kappa), np.std(kappa)), header="Mean(nW/K) Std(nW/K)")
+        if L is not None and A is not None:
+            np.savetxt('thermalconductivity.'+str(int(temperture))+'.dat',(np.mean(kappa*L/A*10), np.std(kappa*L/A*10)), header="Mean(W/mK) Std(W/mK)")
     else:
         print("delta=0, no thermal conductance calculated.")
 

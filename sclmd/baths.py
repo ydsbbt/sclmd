@@ -55,7 +55,7 @@ def gamt(tl, wl, gwl, gam, eta_ad=0):
 class ebath:
     '''
     cats    center degree's of freedom connecting to electrons
-    T      equlibrium temperature of electrons
+    T       equlibrium temperature of electrons
     bias    applied bias
     wmax    cutoff energy of electron bath
     nw      number of energy points
