@@ -105,9 +105,9 @@ def calTC(delta, dlist=1, L=None, A=None):
         np.savetxt('thermalconductance.'+str(int(temperture))+'.dat',
                (np.mean(kappa), np.std(kappa)), header="Mean(nW/K) Std(nW/K)")
         if L is not None and A is not None:
-            np.savetxt('thermalconductivity.'+str(int(temperture))+'.dat',(np.mean(kappa*L/A*10), np.std(kappa*L/A*10)), header="Mean(W/mK) Std(W/mK)")
+            np.savetxt('thermalconductivity.'+str(int(temperture))+'.dat',(np.mean(kappa*L/A*10), np.std(kappa*L/A*10)), header="Mean(W/m-K) Std(W/m-K)")
     else:
-        print("delta=0, no thermal conductance calculated.")
+        print("delta=0, no thermal conductance/conductivity calculated.")
 
 def get_atomname(mass):
     """
