@@ -205,6 +205,10 @@ class bpt:
     def thermalconductance(self, T, delta):
         return self.thermalcurrent(T, delta)/(T*delta)
 
+    def thermalconductivity(self, T, delta, L, A):
+        # L,A units in Angstrom
+        return self.thermalconductance(T, delta)*L/A*10
+
     def write_v_sim(self, filename="anime.ascii"):
         from sclmd.tools import get_atomname
         # TODO: Not completely accurate in box setting & eigvecs
