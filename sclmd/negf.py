@@ -14,21 +14,20 @@ class bpt:
         self.rpc = 6.582119569e-4
         # Boltzmann constant unit in: eV/K
         self.bc = 8.617333262e-5
-        self.infile = infile
         self.damp = damp
         self.maxomega = maxomega/self.rpc
         self.intnum = num
         self.dofatomfixed = dofatomfixed
         self.dofatomofbath = dofatomofbath
         self.dynmatfile = dynmatfile
-        self.getdynmat()
+        self.getdynmat(infile)
         self.gettm(vector)
 
-    def getdynmat(self):
+    def getdynmat(self,infile):
         lmp = lammps()
         #lmp = lammps(cmdargs=['-screen', 'none', '-log', 'none'])
         print('LAMMPS init')
-        lmp.commands_list(self.infile)
+        lmp.commands_list(infile)
         self.natoms = lmp.get_natoms()
         box = lmp.extract_box()
         self.boxlo = np.array(box[0])
