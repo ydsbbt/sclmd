@@ -37,7 +37,7 @@ def dumpavetraj(lammpsdata, trajectoriesfiles, position_only=False, outputname="
     export_file(data, outputname, "lammps/data", atom_style="full")
 
 
-def calHF(dlist=1):
+def calHF(dlist=1,bathnum=2):
     import glob
 
     # calculate average heat flux
@@ -50,9 +50,9 @@ def calHF(dlist=1):
 
     dlist = list(range(dlist))
     times = int(len(glob.glob('kappa.*.bath0.run*.dat')))
-    kb = np.empty([2, times])
+    kb = np.empty([bathnum, times])
 
-    for i in range(2):  
+    for i in range(bathnum):  
         for j in range(times):
             kappafile = "kappa." + \
                 str(int(temperture))+".bath"+str(i)+".run"+str(j)+".dat"
@@ -67,8 +67,7 @@ def calHF(dlist=1):
         for j in range(balancekb.shape[1]):
             balancekb[i][j] = np.mean(oldkb[i][0:j+1])
 
-    np.savetxt('heatflux.'+str(int(temperture))+'.dat', np.transpose(
-        (balancekb[0], balancekb[1], (balancekb[0]-balancekb[1])/2)), header="Bath0 Bath1 heatflux")
+    np.savetxt('heatflux.'+str(int(temperture))+'.dat', np.transpose(balancekb))
 
 
 def calTC(delta, dlist=1, L=None, A=None):
