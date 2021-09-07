@@ -7,3 +7,4 @@ clean.sh
 *.ani
 *.nc
 log.lammps
+.vscode

@@ -26,37 +26,6 @@ class sig:
         # self.extendcell()
         self.getdynmat(infile)
 
-#    def extendcell(lammpsdata, trajectoriesfiles, position_only=False, outputname="avestructure.data"):
-#        from ovito.io import export_file, import_file
-#        # generate large structure file
-#        print("import LAMMPS data file %s" % lammpsdata)
-#        data = import_file(lammpsdata).source.compute(0)
-#        aveposition = np.zeros(
-#            [len(trajectoriesfiles), data.number_of_particles, 3])
-#        if position_only:
-#            for i, trajfile in enumerate(trajectoriesfiles):
-#                print("import trajectorie file %s" % trajfile)
-#                traj = import_file(trajfile, columns=[
-#                    "Particle Type", "Position.X", "Position.Y", "Position.Z"])
-#                for frame_index in range(traj.source.num_frames):
-#                    position = np.array(traj.source.compute(
-#                        frame_index).particles.positions)
-#                    aveposition[i] = (aveposition[i]*frame_index +
-#                                      position)/(frame_index+1)
-#        else:
-#            for i, trajfile in enumerate(trajectoriesfiles):
-#                print("import trajectorie file %s" % trajfile)
-#                traj = import_file(trajfile, columns=[
-#                    "Particle Type", "Position.X", "Position.Y", "Position.Z", "Force.X", "Force.Y", "Force.Z"])
-#                for frame_index in range(traj.source.num_frames):
-#                    position = np.array(traj.source.compute(
-#                        frame_index).particles.positions)
-#                    aveposition[i] = (aveposition[i]*frame_index +
-#                                      position)/(frame_index+1)
-#        data.particles_.positions_[:] = np.mean(aveposition, axis=0)
-#        print("export LAMMPS data file %s" % outputname)
-#        export_file(data, outputname, "lammps/data", atom_style="full")
-
     def getdynmat(self, infile):
         from lammps import lammps
         lmp = lammps()
@@ -126,37 +95,58 @@ class sig:
     def K10(self):
         return self.dynmat[self.dofatomK00, :][:, self.dofatomK10]
 
+    def sgf(self):
+        # Algorithms for surface Green’s functions
+        s = self.K00()
+        e = self.K00()
+        alpha = self.K01()
+        epsilon = 1e-6
+        eta = 1e-9
+        iter = 0
+        omega = 1
+        while np.linalg.det(alpha) > epsilon:
+            g = np.linalg.inv((omega+1j*eta) ** 2*np.identity(len(e))-e)
+            beta = np.transpose(alpha)
+            s += np.dot(np.dot(alpha, g), beta)
+            e += np.dot(np.dot(alpha, g), beta) + \
+                np.dot(np.dot(beta, g), alpha)
+            alpha = np.dot(np.dot(alpha, g), alpha)
+            iter += 1
+            if iter > 10000:
+                print('Iteration number exceeded')
+                return -1
+        return np.linalg.inv((omega+1j*eta) ** 2*np.identity(len(s))-s)
+
+    def selfenergy(self):
+        # self energy
+        return np.dot(np.dot(self.K01(), self.sgf()), self.K10())
+
 
 if __name__ == '__main__':
-    '''
-    Units
-    Time: ps
-    Frequence: eV
-    Temperture: K
-    Heat Current: nW
-    '''
     import time
 
-    import numpy as np
-
-    from sclmd.selfenergy import sig
+    #from sclmd.selfenergy import sig
     infile = [
         'atom_style full',
         'units metal',
         'boundary p p p',
-        'read_data structure.data',
+        'read_data sig.data',
         'pair_style rebo',
-        'pair_coeff * * CH.rebo C H',
+        'pair_coeff * * CH.rebo C',
         'min_style  cg',
         'minimize   1e-25   1e-25   5000    10000',
+        'dump 1 all xyz 1 dump.xyz',
+        'run 0',
     ]
     time_start = time.time()
-    dofatomK10 = range(20*3, (69+1)*3)
-    dofatomK00 = range(70*3, 131*3)
-    dofatomK01 = range(131*3, (180+1)*3)
-    atomfixed = [range(0*3, (19+1)*3), range(181*3, (200+1)*3)]
-    mode = sig(infile, dofatomK00, dofatomK01, dofatomK10, atomfixed)
+    dofatomK10 = range(204*3, 306*3)
+    dofatomK00 = range(306*3, 408*3)
+    dofatomK01 = range(408*3, 510*3)
+    #atomfixed = [range(0*3, (19+1)*3), range(181*3, (200+1)*3)]
+    mode = sig(infile, dofatomK00, dofatomK01, dofatomK10)
     mode.K00()
     mode.K01()
     mode.K10()
+    mode.sgf()
+    mode.selfenergy()
     print('time cost', time.time()-time_start, 's')
