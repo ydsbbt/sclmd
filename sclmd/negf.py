@@ -23,7 +23,7 @@ class bpt:
         self.getdynmat(infile)
         self.gettm(vector)
 
-    def getdynmat(self,infile):
+    def getdynmat(self, infile):
         lmp = lammps()
         #lmp = lammps(cmdargs=['-screen', 'none', '-log', 'none'])
         print('LAMMPS init')
@@ -70,15 +70,20 @@ class bpt:
         if len(self.xyz) != len(self.dynmat):
             print('System DOF test failed after atoms reduced, check again')
             sys.exit()
+        ffi = []
         print('Calculate angular frequency')
         eigvals, self.eigvecs = np.linalg.eigh(self.dynmat)
         for i, val in enumerate(eigvals):
             if val > 0:
                 self.omegas.append(np.sqrt(val)*self.rpc)
             else:
-                print('False frequency exists in system DOF %i ' %
-                      (i+len(self.dofatomfixed[0])))
+                ffi.append(i)
+                # print('False frequency exists in system DOF %i ' %
+                #      (i+len(self.dofatomfixed[0])))
                 self.omegas.append(-np.sqrt(-val)*self.rpc)
+        print('%i false frequencies exist in %i frequencies' %
+              (len(ffi), len(self.omegas)))
+        np.savetxt('falsefrequencies.dat', ffi, fmt='%d')
         np.savetxt('omegas.dat', self.omegas)
         np.savetxt('eigvecs.dat', self.eigvecs)
 
