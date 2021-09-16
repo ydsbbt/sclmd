@@ -299,7 +299,8 @@ class phbath:
         self.K00, self.K01, self.V01 = K00, K01, V01
         self.dt, self.nmd, self.ml = dt, nmd, ml
         self.kernel = None
-        self.cids = np.array([[3*c+0, 3*c+1, 3*c+2] for c in cats]).flatten()
+        #self.cids = np.array([[3*c+0, 3*c+1, 3*c+2] for c in cats]).flatten()
+        self.cids = np.array(cats, dtype='int')
         self.nc = len(self.cids)
         self.wmax = mcof*debye
         self.local = False
