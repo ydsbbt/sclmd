@@ -1,29 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 
-import sys
-
 import numpy as np
 
 
 class sig:
     # This class is used to create a selfenergy object.
-    def __init__(self, infile, dofatomK00, dofatomK01, dofatomK10=[], dofatomfixed=[[], []], dynmatfile=None):
+    def __init__(self, infile, maxomega, atomgroup0, atomgroup1, dofatomfixed=[[], []], dynmatfile=None, num=1000, eta=0.164e-3):
         # Initializes the selfenergy object.
         # reduced Planck constant unit in: eV*ps
         self.rpc = 6.582119569e-4
         # Boltzmann constant unit in: eV/K
-        self.bc = 8.617333262e-5
+        # self.bc = 8.617333262e-5
         #self.infile = infile
         #self.damp = damp
-        #self.maxomega = maxomega/self.rpc
-        #self.intnum = num
-        self.dofatomK00 = dofatomK00
-        self.dofatomK01 = dofatomK01
-        self.dofatomK10 = dofatomK10
+        self.maxomega = maxomega/self.rpc
+        self.intnum = num
+        self.eta = eta/self.rpc
+        self.dofatomK00 = atomgroup0
+        self.dofatomK11 = atomgroup1
         self.dofatomfixed = dofatomfixed
         self.dynmatfile = dynmatfile
-        # self.extendcell()
         self.getdynmat(infile)
 
     def getdynmat(self, infile):
@@ -57,12 +54,12 @@ class sig:
             dynmatdat = np.loadtxt(self.dynmatfile)
         lmp.close()
         self.dynmat = []
-        omegas = []
+        self.omegas = []
         self.doffreeatom = 0
         dynlen = int(3*np.sqrt(len(dynmatdat)/3))
         if dynlen != self.natoms*3:
-            print('System DOF test failed after load dynmat, check again')
-            sys.exit()
+            raise ValueError(
+                'System DOF test failed after load dynmat, check again')
         self.dynmat = dynmatdat.reshape((dynlen, dynlen))
         dynmatexcpfixed = np.delete(self.dynmat, self.dofatomfixed[0], axis=0)
         dynmatexcpfixed = np.delete(
@@ -72,54 +69,132 @@ class sig:
         dynmatexcpfixed = np.delete(dynmatexcpfixed, [
             dof-len(self.dofatomfixed[0]) for dof in self.dofatomfixed[1]], axis=1)
         if len(self.xyz) != len(dynmatexcpfixed):
-            print('System DOF test failed after atoms reduced, check again')
-            sys.exit()
+            raise ValueError(
+                'System DOF test failed after atoms reduced, check again')
         print('Calculate angular frequency')
         eigvals, eigvecs = np.linalg.eigh(dynmatexcpfixed)
+        ffi = []
         for i, val in enumerate(eigvals):
             if val > 0:
-                omegas.append(np.sqrt(val)*self.rpc)
+                self.omegas.append(np.sqrt(val)*self.rpc)
             else:
-                print('False frequency exists in system DOF %i ' %
-                      (i+len(self.dofatomfixed[0])))
-                omegas.append(-np.sqrt(-val)*self.rpc)
-        np.savetxt('omegas.dat', omegas)
+                ffi.append(i)
+                # print('False frequency exists in system DOF %i ' %
+                #      (i+len(self.dofatomfixed[0])))
+                self.omegas.append(-np.sqrt(-val)*self.rpc)
+        print('%i false frequencies exist in %i frequencies' %
+              (len(ffi), len(self.omegas)))
+        np.savetxt('falsefrequencies.dat', ffi, fmt='%d')
+        np.savetxt('omegas.dat', self.omegas)
         np.savetxt('eigvecs.dat', eigvecs)
 
     def K00(self):
         return self.dynmat[self.dofatomK00, :][:, self.dofatomK00]
 
     def K01(self):
-        return self.dynmat[self.dofatomK00, :][:, self.dofatomK01]
+        return self.dynmat[self.dofatomK00, :][:, self.dofatomK11]
 
     def K10(self):
-        return self.dynmat[self.dofatomK00, :][:, self.dofatomK10]
+        return self.dynmat[self.dofatomK11, :][:, self.dofatomK00]
 
-    def sgf(self):
-        # Algorithms for surface Green’s functions
-        s = self.K00()
-        e = self.K00()
-        alpha = self.K01()
-        epsilon = 1e-6
-        eta = 1e-9
+    def K11(self):
+        return self.dynmat[self.dofatomK11, :][:, self.dofatomK11]
+
+    def sgf(self, omega, direction):
+        # Algorithm for surface Green’s function
+        if direction == 'R':
+            s = self.K00().astype(complex)
+            e = self.K11().astype(complex)
+            alpha = self.K01().astype(complex)
+        elif direction == 'L':
+            s = self.K11().astype(complex)
+            e = self.K00().astype(complex)
+            alpha = self.K10().astype(complex)
+        else:
+            raise ValueError('Wrong direction, should only be R or L')
         iter = 0
-        omega = 1
-        while np.linalg.det(alpha) > epsilon:
-            g = np.linalg.inv((omega+1j*eta) ** 2*np.identity(len(e))-e)
+        while np.linalg.norm(alpha) > 1e-8:
+            g = np.linalg.inv((omega+self.eta*1j)**2*np.identity(len(e))-e)
             beta = np.transpose(alpha)
             s += np.dot(np.dot(alpha, g), beta)
             e += np.dot(np.dot(alpha, g), beta) + \
                 np.dot(np.dot(beta, g), alpha)
             alpha = np.dot(np.dot(alpha, g), alpha)
             iter += 1
-            if iter > 10000:
-                print('Iteration number exceeded')
-                return -1
-        return np.linalg.inv((omega+1j*eta) ** 2*np.identity(len(s))-s)
+            #print('Iteration %i' % iter, 'det(alpha)', np.linalg.norm(alpha))
+            if iter >= 100:
+                #print('Iteration number for surface Green’s function: %i' % iter)
+                raise ValueError('Iteration number exceeded 100')
+        return np.linalg.inv((omega+self.eta*1j)**2*np.identity(len(s))-s)
 
-    def selfenergy(self):
+    def selfenergy(self, omega, direction):
         # self energy
-        return np.dot(np.dot(self.K01(), self.sgf()), self.K10())
+        if direction == 'R':
+            return np.dot(np.dot(self.K01(), self.sgf(omega, direction)), self.K10())
+        elif direction == 'L':
+            return np.dot(np.dot(self.K10(), self.sgf(omega, direction)), self.K01())
+        else:
+            raise ValueError('Wrong direction, should only be R or L')
+
+    def gamma(self, Pi):
+        return -1j*(Pi-Pi.conjugate().transpose())
+
+    def retargf(self, omega):
+        # retarded Green function
+        return np.linalg.inv((omega+1e-8*1j)**2*np.identity(len(self.K00()))-self.K00()-self.selfenergy(omega, 'L')-self.selfenergy(omega, 'R'))
+
+    def tm(self, omega):
+        # Transmission
+        return np.real(np.trace(np.dot(np.dot(np.dot(self.retargf(omega), self.gamma(self.selfenergy(omega, 'L'))), self.retargf(omega).conjugate().transpose()), self.gamma(self.selfenergy(omega, 'R')))))
+
+    def getse(self):
+        # get a set of selfenergy of given omega
+        x = np.linspace(0, self.maxomega, self.intnum+1)
+        from tqdm import tqdm
+        dosx = []
+        se = []
+        print("Calculate selfenergy")
+        for var in tqdm(x, unit="steps", mininterval=1):
+            selfenergysplit = self.selfenergy(var, 'L')
+            se.append(selfenergysplit)
+            dosx.append(-np.trace(np.imag(selfenergysplit)))
+        self.dos = np.array(np.column_stack((x, np.array(dosx))))
+        np.savetxt('densityofstates.dat', np.column_stack(
+            (self.dos[:, 0]*self.rpc, self.dos[:, 1])))
+        # return np.array(se)
+
+    def gettm(self):
+        # get a set of transmission of given omega
+        x = np.linspace(0, self.maxomega, self.intnum+1)
+        from tqdm import tqdm
+        tm = []
+        print("Calculate transmission")
+        for var in tqdm(x, unit="steps", mininterval=1):
+            tm.append(self.tm(var))
+        self.tmnumber = np.array(np.column_stack((x, np.array(tm))))
+        np.savetxt('transmission.dat', np.column_stack(
+            (self.tmnumber[:, 0]*self.rpc, self.tmnumber[:, 1])))
+        # return np.array(se)
+
+    def plotresult(self, lines=180):
+        from matplotlib import pyplot as plt
+        plt.figure(0)
+        plt.hist(self.omegas, bins=lines)
+        plt.xlabel('Frequence(eV)')
+        plt.ylabel('Number')
+        #plt.xlim(0, self.maxomega*self.rpc)
+        plt.savefig('omegas.png')
+        plt.figure(1)
+        plt.plot(self.dos[:, 0]*self.rpc, self.dos[:, 1])
+        plt.xlabel('Frequence(eV)')
+        plt.ylabel('DOS')
+        plt.gca().ticklabel_format(style='sci', scilimits=(-1, 2), axis='y')
+        plt.savefig('densityofstates.png')
+        plt.figure(2)
+        plt.plot(self.tmnumber[:, 0]*self.rpc, self.tmnumber[:, 1])
+        plt.xlabel('Frequence(eV)')
+        plt.ylabel('Transmission')
+        plt.savefig('transmission.png')
 
 
 if __name__ == '__main__':
@@ -128,25 +203,24 @@ if __name__ == '__main__':
     #from sclmd.selfenergy import sig
     infile = [
         'atom_style full',
-        'units metal',
-        'boundary p p p',
-        'read_data sig.data',
+        'units  metal',
+        #'boundary p p p',
+        'read_data  sig-6.data',
         'pair_style rebo',
-        'pair_coeff * * CH.rebo C',
-        'min_style  cg',
+        'pair_coeff *   *   CH.rebo C',
+        #'min_style  cg',
         'minimize   1e-25   1e-25   5000    10000',
-        'dump 1 all xyz 1 dump.xyz',
-        'run 0',
+        'dump   1   all xyz 1   dump.xyz',
+        'run    0',
     ]
     time_start = time.time()
-    dofatomK10 = range(204*3, 306*3)
-    dofatomK00 = range(306*3, 408*3)
-    dofatomK01 = range(408*3, 510*3)
+    atomgroup0 = range(204*3, 306*3)
+    atomgroup1 = range(306*3, 408*3)
+    #atomgroup1 = range(408*3, 510*3)
     #atomfixed = [range(0*3, (19+1)*3), range(181*3, (200+1)*3)]
-    mode = sig(infile, dofatomK00, dofatomK01, dofatomK10)
-    mode.K00()
-    mode.K01()
-    mode.K10()
-    mode.sgf()
-    mode.selfenergy()
+    mode = sig(infile, 0.25, atomgroup0, atomgroup1,
+               dofatomfixed=[[], []], dynmatfile=None, num=2000)
+    mode.getse()
+    mode.gettm()
+    mode.plotresult()
     print('time cost', time.time()-time_start, 's')

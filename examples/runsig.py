@@ -1,5 +1,7 @@
 import time
+
 from sclmd.selfenergy import sig
+
 infile = [
     'atom_style full',
     'units metal',
@@ -13,14 +15,11 @@ infile = [
     'run 0',
 ]
 time_start = time.time()
-dofatomK10 = range(204*3, 306*3)
-dofatomK00 = range(306*3, 408*3)
-dofatomK01 = range(408*3, 510*3)
-#atomfixed = [range(0*3, (19+1)*3), range(181*3, (200+1)*3)]
-mode = sig(infile, dofatomK00, dofatomK01, dofatomK10)
-mode.K00()
-mode.K01()
-mode.K10()
-mode.sgf()
-mode.selfenergy()
+atomgroup0 = range(24*3, 32*3)
+atomgroup1 = range(32*3, 40*3)
+mode = sig(infile, 0.12, atomgroup0, atomgroup1,
+           dofatomfixed=[[], []], dynmatfile=None, num=2000, eta=0.164e-3)
+mode.getse()
+mode.gettm()
+# mode.plotresult()
 print('time cost', time.time()-time_start, 's')
