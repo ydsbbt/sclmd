@@ -21,6 +21,7 @@ class sig:
         self.dofatomK11 = atomgroup1
         self.dofatomfixed = dofatomfixed
         self.dynmatfile = dynmatfile
+        self.omegalist = np.linspace(0, self.maxomega, self.intnum+1)
         self.getdynmat(infile)
 
     def getdynmat(self, infile):
@@ -147,31 +148,29 @@ class sig:
         # Transmission
         return np.real(np.trace(np.dot(np.dot(np.dot(self.retargf(omega), self.gamma(self.selfenergy(omega, 'L'))), self.retargf(omega).conjugate().transpose()), self.gamma(self.selfenergy(omega, 'R')))))
 
-    def getse(self):
+    def getse(self, direction):
         # get a set of selfenergy of given omega
-        x = np.linspace(0, self.maxomega, self.intnum+1)
         from tqdm import tqdm
         dosx = []
         se = []
-        print("Calculate selfenergy")
-        for var in tqdm(x, unit="steps", mininterval=1):
-            selfenergysplit = self.selfenergy(var, 'L')
+        print("Calculate selfenergy of "+str(direction)+" lead")
+        for var in tqdm(self.omegalist, unit="steps", mininterval=1):
+            selfenergysplit = self.selfenergy(var, direction)
             se.append(selfenergysplit)
             dosx.append(-np.trace(np.imag(selfenergysplit)))
-        self.dos = np.array(np.column_stack((x, np.array(dosx))))
-        np.savetxt('densityofstates.dat', np.column_stack(
+        self.dos = np.array(np.column_stack((self.omegalist, np.array(dosx))))
+        np.savetxt('densityofstates_'+str(direction)+'.dat', np.column_stack(
             (self.dos[:, 0]*self.rpc, self.dos[:, 1])))
-        # return np.array(se)
+        return np.array(se)
 
     def gettm(self):
         # get a set of transmission of given omega
-        x = np.linspace(0, self.maxomega, self.intnum+1)
         from tqdm import tqdm
         tm = []
         print("Calculate transmission")
-        for var in tqdm(x, unit="steps", mininterval=1):
+        for var in tqdm(self.omegalist, unit="steps", mininterval=1):
             tm.append(self.tm(var))
-        self.tmnumber = np.array(np.column_stack((x, np.array(tm))))
+        self.tmnumber = np.array(np.column_stack((self.omegalist, np.array(tm))))
         np.savetxt('transmission.dat', np.column_stack(
             (self.tmnumber[:, 0]*self.rpc, self.tmnumber[:, 1])))
         # return np.array(se)
@@ -220,7 +219,8 @@ if __name__ == '__main__':
     #atomfixed = [range(0*3, (19+1)*3), range(181*3, (200+1)*3)]
     mode = sig(infile, 0.25, atomgroup0, atomgroup1,
                dofatomfixed=[[], []], dynmatfile=None, num=2000)
-    mode.getse()
+    mode.getse('L')
+    mode.getse('R')
     mode.gettm()
     mode.plotresult()
     print('time cost', time.time()-time_start, 's')
