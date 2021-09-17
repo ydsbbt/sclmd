@@ -417,9 +417,11 @@ class phbath:
             print("phbath.gmem: length of memory kernel not set!")
             sys.exit()
         if self.local:
+            print("phbath.gmem: local friction kernel is used")
             self.ml = 1
             self.kernel = self.gamma
         else:
+            print("phbath.gmem: global friction kernel is used")
             tl = [self.dt*i for i in range(self.ml)]
             self.kernel = np.real(
                 gamt(tl, self.wl, self.gwl, self.gamma, self.eta_ad))

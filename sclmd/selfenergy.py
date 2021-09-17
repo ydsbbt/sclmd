@@ -21,7 +21,7 @@ class sig:
         self.dofatomK11 = atomgroup1
         self.dofatomfixed = dofatomfixed
         self.dynmatfile = dynmatfile
-        self.omegalist = np.linspace(0, self.maxomega, self.intnum+1)
+        self.ep = np.linspace(0, self.maxomega, self.intnum+1)
         self.getdynmat(infile)
 
     def getdynmat(self, infile):
@@ -154,11 +154,11 @@ class sig:
         dosx = []
         se = []
         print("Calculate selfenergy of "+str(direction)+" lead")
-        for var in tqdm(self.omegalist, unit="steps", mininterval=1):
+        for var in tqdm(self.ep, unit="steps", mininterval=1):
             selfenergysplit = self.selfenergy(var, direction)
             se.append(selfenergysplit)
             dosx.append(-np.trace(np.imag(selfenergysplit)))
-        self.dos = np.array(np.column_stack((self.omegalist, np.array(dosx))))
+        self.dos = np.array(np.column_stack((self.ep, np.array(dosx))))
         np.savetxt('densityofstates_'+str(direction)+'.dat', np.column_stack(
             (self.dos[:, 0]*self.rpc, self.dos[:, 1])))
         return np.array(se)
@@ -168,9 +168,9 @@ class sig:
         from tqdm import tqdm
         tm = []
         print("Calculate transmission")
-        for var in tqdm(self.omegalist, unit="steps", mininterval=1):
+        for var in tqdm(self.ep, unit="steps", mininterval=1):
             tm.append(self.tm(var))
-        self.tmnumber = np.array(np.column_stack((self.omegalist, np.array(tm))))
+        self.tmnumber = np.array(np.column_stack((self.ep, np.array(tm))))
         np.savetxt('transmission.dat', np.column_stack(
             (self.tmnumber[:, 0]*self.rpc, self.tmnumber[:, 1])))
         # return np.array(se)
