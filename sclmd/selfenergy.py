@@ -23,6 +23,7 @@ class sig:
         self.dynmatfile = dynmatfile
         self.ep = np.linspace(0, self.maxomega, self.intnum+1)
         self.getdynmat(infile)
+        self.getdk()
 
     def getdynmat(self, infile):
         from lammps import lammps
@@ -89,28 +90,28 @@ class sig:
         np.savetxt('omegas.dat', self.omegas)
         np.savetxt('eigvecs.dat', eigvecs)
 
-    def K00(self):
-        return self.dynmat[self.dofatomK00, :][:, self.dofatomK00]
-
-    def K01(self):
-        return self.dynmat[self.dofatomK00, :][:, self.dofatomK11]
-
-    def K10(self):
-        return self.dynmat[self.dofatomK11, :][:, self.dofatomK00]
-
-    def K11(self):
-        return self.dynmat[self.dofatomK11, :][:, self.dofatomK11]
+    def getdk(self):
+        # Get dynamic matrix of given atoms
+        self.K00 = self.dynmat[self.dofatomK00, :][:, self.dofatomK00]
+        self.K11 = self.dynmat[self.dofatomK11, :][:, self.dofatomK11]
+        self.K01 = self.dynmat[self.dofatomK00, :][:, self.dofatomK11]
+        self.K10 = self.dynmat[self.dofatomK11, :][:, self.dofatomK00]
+        if np.amax(abs(self.K01 - np.transpose(self.K10)))/np.amax(abs(self.K01)) > 1e-8:
+            raise ValueError('Error: K01 and K10 are not symmetric',np.amax(abs(self.K01 - np.transpose(self.K10)))/np.amax(abs(self.K01)))
+        else:
+            self.K01 = (self.K01+np.transpose(self.K10))/2
+            self.K10 = np.transpose(self.K01)
 
     def sgf(self, omega, direction):
         # Algorithm for surface Green’s function
         if direction == 'R':
-            s = self.K00().astype(complex)
-            e = self.K11().astype(complex)
-            alpha = self.K01().astype(complex)
+            s = self.K00.astype(complex)
+            e = self.K11.astype(complex)
+            alpha = self.K01.astype(complex)
         elif direction == 'L':
-            s = self.K11().astype(complex)
-            e = self.K00().astype(complex)
-            alpha = self.K10().astype(complex)
+            s = self.K11.astype(complex)
+            e = self.K00.astype(complex)
+            alpha = self.K10.astype(complex)
         else:
             raise ValueError('Wrong direction, should only be R or L')
         iter = 0
@@ -125,15 +126,16 @@ class sig:
             #print('Iteration %i' % iter, 'det(alpha)', np.linalg.norm(alpha))
             if iter >= 100:
                 #print('Iteration number for surface Green’s function: %i' % iter)
-                raise ValueError('Iteration number exceeded 100')
+                raise ValueError(
+                    'Iteration number exceeded 100, please increase eta')
         return np.linalg.inv((omega+self.eta*1j)**2*np.identity(len(s))-s)
 
     def selfenergy(self, omega, direction):
         # self energy
         if direction == 'R':
-            return np.dot(np.dot(self.K01(), self.sgf(omega, direction)), self.K10())
+            return np.dot(np.dot(self.K01, self.sgf(omega, direction)), self.K10)
         elif direction == 'L':
-            return np.dot(np.dot(self.K10(), self.sgf(omega, direction)), self.K01())
+            return np.dot(np.dot(self.K10, self.sgf(omega, direction)), self.K01)
         else:
             raise ValueError('Wrong direction, should only be R or L')
 
@@ -142,7 +144,7 @@ class sig:
 
     def retargf(self, omega):
         # retarded Green function
-        return np.linalg.inv((omega+1e-8*1j)**2*np.identity(len(self.K00()))-self.K00()-self.selfenergy(omega, 'L')-self.selfenergy(omega, 'R'))
+        return np.linalg.inv((omega+1e-8*1j)**2*np.identity(len(self.K00))-self.K00-self.selfenergy(omega, 'L')-self.selfenergy(omega, 'R'))
 
     def tm(self, omega):
         # Transmission
@@ -157,7 +159,7 @@ class sig:
         for var in tqdm(self.ep, unit="steps", mininterval=1):
             selfenergysplit = self.selfenergy(var, direction)
             se.append(selfenergysplit)
-            dosx.append(-np.trace(np.imag(selfenergysplit)))
+            dosx.append(-np.trace(np.imag(selfenergysplit))*var/np.pi)
         self.dos = np.array(np.column_stack((self.ep, np.array(dosx))))
         np.savetxt('densityofstates_'+str(direction)+'.dat', np.column_stack(
             (self.dos[:, 0]*self.rpc, self.dos[:, 1])))
@@ -204,7 +206,7 @@ if __name__ == '__main__':
         'atom_style full',
         'units  metal',
         #'boundary p p p',
-        'read_data  sig-6.data',
+        'read_data sig.data',
         'pair_style rebo',
         'pair_coeff *   *   CH.rebo C',
         #'min_style  cg',
@@ -213,12 +215,10 @@ if __name__ == '__main__':
         'run    0',
     ]
     time_start = time.time()
-    atomgroup0 = range(204*3, 306*3)
-    atomgroup1 = range(306*3, 408*3)
-    #atomgroup1 = range(408*3, 510*3)
-    #atomfixed = [range(0*3, (19+1)*3), range(181*3, (200+1)*3)]
-    mode = sig(infile, 0.25, atomgroup0, atomgroup1,
-               dofatomfixed=[[], []], dynmatfile=None, num=2000)
+    atomgroup0 = range(24*3, 32*3)
+    atomgroup1 = range(32*3, 40*3)
+    mode = sig(infile, 0.12, atomgroup0, atomgroup1,
+               dofatomfixed=[[], []], dynmatfile=None, num=2000, eta=0.164e-3)
     mode.getse('L')
     mode.getse('R')
     mode.gettm()
