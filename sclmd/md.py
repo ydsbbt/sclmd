@@ -442,8 +442,7 @@ class md:
         if self.mixf and self.pforce is not None and self.dyn is not None:
             fpot = self.pforce.force(q)
             fdyn = -1*mdot(self.dyn, q)
-            f = fdyn[self.atomtomix[0]] + \
-                fpot[self.atomtomix[1]]+fdyn[self.atomtomix[2]]
+            f = np.append(np.append(fdyn[self.atomtomix[0]],fpot[self.atomtomix[1]]),fdyn[self.atomtomix[2]])
         elif self.pforce is not None:
             f = self.pforce.force(q)
         # use dynamical matrix
