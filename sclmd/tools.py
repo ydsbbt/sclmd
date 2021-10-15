@@ -128,5 +128,5 @@ if __name__ == "__main__":
                 outputname="avetrajectories.data")
     avefiles = ["avestructure.300.run0.dat", "avestructure.300.run1.dat",
                 "avestructure.300.run2.dat", "avestructure.300.run3.dat", "avestructure.300.run4.dat"]
-    dumpavetraj(lammps, trajectories, position_only=True,
+    dumpavetraj(lammps, avefiles, position_only=True,
                 outputname="avestructure.data")
