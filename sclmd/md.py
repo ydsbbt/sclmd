@@ -64,6 +64,7 @@ class md:
         self.savep = False
         self.saveq = False
         self.rmnc = False
+        self.mixf = False
         self.nstep = None
         self.pforce = None
         self.constraint = None
@@ -438,7 +439,12 @@ class md:
         #     sys.exit()
 
         # search for possible drivers
-        if self.pforce is not None:
+        if self.mixf and self.pforce is not None and self.dyn is not None:
+            fpot = self.pforce.force(q)
+            fdyn = -1*mdot(self.dyn, q)
+            f = fdyn[self.atomtomix[0]] + \
+                fpot[self.atomtomix[1]]+fdyn[self.atomtomix[2]]
+        elif self.pforce is not None:
             f = self.pforce.force(q)
         # use dynamical matrix
         elif self.dyn is not None:
@@ -450,6 +456,11 @@ class md:
         self.q0 = q
         self.f0 = f
         return f
+
+    def mixforce(self, atomtomix=None):
+        print("force mixed")
+        self.mixf = True
+        self.atomtomix = atomtomix
 
     def AddPotential(self, pint):
         """
