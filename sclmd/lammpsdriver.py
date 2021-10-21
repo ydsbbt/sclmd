@@ -28,7 +28,6 @@ class lammpsdriver(lammps):
         self.label = label
         self.lunit = lunit
         self.eunit = eunit
-        self.dynmat = None
         if self.eunit == "eV":
             self.para = 1.0
         elif self.eunit == "Kcal/mole":
