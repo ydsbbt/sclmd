@@ -49,8 +49,8 @@ mdrun.mixforce(atomtomix)
 # unit in 0.658211814201041 fs
 damp = 100/0.658211814201041
 
-etal = (1.0/damp)*np.identity(len(ecatsl), np.float)
-etar = (1.0/damp)*np.identity(len(ecatsr), np.float)
+etal = (1.0/damp)*np.identity(len(ecatsl))
+etar = (1.0/damp)*np.identity(len(ecatsr))
 # atom indices that are connecting to bath
 ebl = ebath(ecatsl, T*(1+delta/2), mdrun.dt, mdrun.nmd,
             wmax=1., nw=500, bias=0.0, efric=etal, classical=False, zpmotion=True)
