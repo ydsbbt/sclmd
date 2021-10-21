@@ -28,6 +28,7 @@ class lammpsdriver(lammps):
         self.label = label
         self.lunit = lunit
         self.eunit = eunit
+        self.dynmat = None
         if self.eunit == "eV":
             self.para = 1.0
         elif self.eunit == "Kcal/mole":
@@ -87,3 +88,21 @@ class lammpsdriver(lammps):
 
     def energy(self, eargs="pe"):  # energy,eargs:"pe","ke" or "etotal".
         return self.get_thermo(eargs)
+
+    def dynmat(self, q=None):
+        if q is not None:
+            self.scatter_atoms("x", 1, 3, self.newx(q))
+            print("Calculate dynamical matrix")
+        else:
+            print("Calculate zero displacement dynamical matrix")
+        self.command("dynamical_matrix all eskm 0.000001 file dynmat.dat")
+        dynmatdat = np.loadtxt("dynmat.dat") # Dynmat units in ps^-2, THz^2
+        dynlen = int(3*np.sqrt(len(dynmatdat)/3))
+        rpc = 6.582119569e-4 # Reduced Planck constant in eV*ps
+        return dynmatdat.reshape((dynlen, dynlen))*rpc**2 # Dynmat units in eV^2
+
+    #def updatedynmat(self, q):
+    #    displacement = np.amax(np.abs(self.conv*q))
+    #    if displacement > 2:
+    #        print("Large displacement: %f ang, re-calcuate dynamical matrix" % displacement)
+    #        return self.dynmat(q)
