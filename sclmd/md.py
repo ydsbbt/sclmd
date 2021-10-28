@@ -64,7 +64,7 @@ class md:
         self.savep = False
         self.saveq = False
         self.rmnc = False
-        self.mixf = False
+        #self.mixf = False
         self.nstep = None
         self.pforce = None
         #self.pforce2 = None
@@ -459,10 +459,10 @@ class md:
         self.f0 = f
         return f
 
-    def mixforce(self, atomtomix=None):
-        print("force mixed")
-        self.mixf = True
-        self.atomtomix = atomtomix
+    #def mixforce(self, atomtomix=None):
+    #    print("force mixed")
+    #    self.mixf = True
+    #    self.atomtomix = atomtomix
 
     def AddPotential(self, pint):
         """
