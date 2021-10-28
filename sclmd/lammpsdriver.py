@@ -21,7 +21,7 @@ class lammpsdriver(lammps):
                  constraints=[], tdir="./", lunit="Ang", eunit="eV", md2ang=0.06466,
                  name="", cmdargs=args.split(), ptr=None, comm=None
                  ):
-        lammps.__init__(self, name="", cmdargs=cmdargs, ptr=None, comm=None)
+        lammps.__init__(self, name=name, cmdargs=cmdargs, ptr=None, comm=None)
         self.infile = infile
         self.md2ang = md2ang
         self.constraints = constraints
