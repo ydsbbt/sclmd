@@ -67,6 +67,7 @@ class md:
         self.mixf = False
         self.nstep = None
         self.pforce = None
+        #self.pforce2 = None
         self.constraint = None
         self.atomlist = None
         # var: xyz,nta,els
@@ -439,12 +440,13 @@ class md:
         #     sys.exit()
 
         # search for possible drivers
-        if self.mixf and self.pforce is not None and self.dyn is not None:
-            fpot = self.pforce.force(q)
-            fdyn = -1*mdot(self.dyn, q)
-            #fdyn = -1*mdot(self.pforce.updynmat(q), q)
-            f = np.append(np.append(fdyn[self.atomtomix[0]],fpot[self.atomtomix[1]]),fdyn[self.atomtomix[2]])
-        elif self.pforce is not None:
+        #if self.mixf and self.pforce is not None and self.dyn is not None:
+        #    fdyn = -1*mdot(self.dyn, q)
+        #    fpot2 = self.pforce2.force(q[self.atomtomix[1]])
+        #    fpot = -1*mdot(self.dyn[self.atomtomix[1], :][:, self.atomtomix[0]], q[self.atomtomix[0]])+fpot2-1*mdot(self.dyn[self.atomtomix[1], :][:, self.atomtomix[2]], q[self.atomtomix[2]])
+        #    f = np.append(np.append(fdyn[self.atomtomix[0]], fpot), fdyn[self.atomtomix[2]])
+        #elif self.pforce is not None:
+        if self.pforce is not None:
             f = self.pforce.force(q)
         # use dynamical matrix
         elif self.dyn is not None:
@@ -467,6 +469,12 @@ class md:
         add siesta, lammps or Brenner instance
         """
         self.pforce = pint
+
+    #def AddAnotherPotential(self, ppint):
+    #    """
+    #    add siesta, lammps or Brenner instance
+    #    """
+    #    self.pforce2 = ppint
 
     def Run(self):
         """
