@@ -37,7 +37,7 @@ def dumpavetraj(lammpsdata, trajectoriesfiles, position_only=False, outputname="
     export_file(data, outputname, "lammps/data", atom_style="full")
 
 
-def calHF(dlist=1,bathnum=2):
+def calHF(dlist=1, bathnum=2):
     import glob
 
     # calculate average heat flux
@@ -52,7 +52,7 @@ def calHF(dlist=1,bathnum=2):
     times = int(len(glob.glob('kappa.*.bath0.run*.dat')))
     kb = np.empty([bathnum, times])
 
-    for i in range(bathnum):  
+    for i in range(bathnum):
         for j in range(times):
             kappafile = "kappa." + \
                 str(int(temperture))+".bath"+str(i)+".run"+str(j)+".dat"
@@ -67,7 +67,8 @@ def calHF(dlist=1,bathnum=2):
         for j in range(balancekb.shape[1]):
             balancekb[i][j] = np.mean(oldkb[i][0:j+1])
 
-    np.savetxt('heatflux.'+str(int(temperture))+'.dat', np.transpose(balancekb))
+    np.savetxt('heatflux.'+str(int(temperture)) +
+               '.dat', np.transpose(balancekb))
 
 
 def calTC(delta, dlist=1, L=None, A=None):
@@ -95,18 +96,20 @@ def calTC(delta, dlist=1, L=None, A=None):
                     for line in f:
                         kb[i][j] = line.split()[2]
 #                        temperture=float(line.split()[1])
-    if  delta != 0:
+    if delta != 0:
         kappa = (kb[0]-kb[1])/2/(delta*temperture)
         kappa = np.delete(kappa, dlist)
         # for i in range(len(kappa)):
         #    kappa[i]=np.mean(kappa[0:i+1])
 
         np.savetxt('thermalconductance.'+str(int(temperture))+'.dat',
-               (np.mean(kappa), np.std(kappa)), header="Mean(nW/K) Std(nW/K)")
+                   (np.mean(kappa), np.std(kappa)), header="Mean(nW/K) Std(nW/K)")
         if L is not None and A is not None:
-            np.savetxt('thermalconductivity.'+str(int(temperture))+'.dat',(np.mean(kappa*L/A*10), np.std(kappa*L/A*10)), header="Mean(W/m-K) Std(W/m-K)")
+            np.savetxt('thermalconductivity.'+str(int(temperture))+'.dat',
+                       (np.mean(kappa*L/A*10), np.std(kappa*L/A*10)), header="Mean(W/m-K) Std(W/m-K)")
     else:
         print("delta=0, no thermal conductance/conductivity calculated.")
+
 
 def get_atomname(mass):
     """
@@ -118,6 +121,25 @@ def get_atomname(mass):
         if abs(mass-value) < 0.01:
             return key
 
+
+def eff():
+    '''
+    eliminate false frequencies
+    '''
+    dynmatdat = np.loadtxt('dynmat.dat')
+    dynlen = int(3*np.sqrt(len(dynmatdat)/3))
+    dynmat = dynmatdat.reshape((dynlen, dynlen))
+    #dynmat = (dynmat+dynmat.conjugate().transpose())/2
+    eigvals, eigvecs = np.linalg.eigh(dynmat)
+    while not (eigvals>0).all():
+        for i, val in enumerate(eigvals):
+            if val < 0:
+                print('False frequency exists in system DOF %i ' % i)
+                eigvals[i] = 0
+        dynmat = np.linalg.multi_dot([eigvecs, np.identity(
+            len(eigvals))*eigvals, np.linalg.inv(eigvecs)])
+        eigvals, eigvecs = np.linalg.eigh(dynmat)
+    np.savetxt('dynmatmod.dat', dynmat)
 
 if __name__ == "__main__":
     from sclmd.tools import dumpavetraj
