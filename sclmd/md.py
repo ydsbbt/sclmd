@@ -96,6 +96,7 @@ class md:
             self.nph = None
 
         self.ml = 1
+        self.cf = 0
         self.t = 0
         self.p = []
         self.q = []
@@ -352,6 +353,10 @@ class md:
                 self.poweratomlist[layers] = powerspecp(
                     self.ps[:, self.atomlist[layers]], self.dt, self.nmd)
 
+    def CompareForce(self):
+        self.cf = 1
+        self.cflist = np.zeros(self.nph)
+
     def vv(self, id):
         """
         velocity-verlet method integrator
@@ -363,6 +368,9 @@ class md:
             self.ps[t % self.nmd] = p
         if self.saveq:
             self.qs[t % self.nmd] = q
+        if self.cf:
+            self.cflist = (self.cflist*t+self.potforce(q) -
+                           (-1*mdot(self.dyn, q)))/(t+1)
 
         # total energy
         #self.etot = np.append(self.etot,self.energy())
@@ -440,12 +448,12 @@ class md:
         #     sys.exit()
 
         # search for possible drivers
-        #if self.mixf and self.pforce is not None and self.dyn is not None:
+        # if self.mixf and self.pforce is not None and self.dyn is not None:
         #    fdyn = -1*mdot(self.dyn, q)
         #    fpot2 = self.pforce2.force(q[self.atomtomix[1]])
         #    fpot = -1*mdot(self.dyn[self.atomtomix[1], :][:, self.atomtomix[0]], q[self.atomtomix[0]])+fpot2-1*mdot(self.dyn[self.atomtomix[1], :][:, self.atomtomix[2]], q[self.atomtomix[2]])
         #    f = np.append(np.append(fdyn[self.atomtomix[0]], fpot), fdyn[self.atomtomix[2]])
-        #elif self.pforce is not None:
+        # elif self.pforce is not None:
         if self.pforce is not None:
             f = self.pforce.force(q)
         # use dynamical matrix
@@ -459,7 +467,7 @@ class md:
         self.f0 = f
         return f
 
-    #def mixforce(self, atomtomix=None):
+    # def mixforce(self, atomtomix=None):
     #    print("force mixed")
     #    self.mixf = True
     #    self.atomtomix = atomtomix
@@ -470,7 +478,7 @@ class md:
         """
         self.pforce = pint
 
-    #def AddAnotherPotential(self, ppint):
+    # def AddAnotherPotential(self, ppint):
     #    """
     #    add siesta, lammps or Brenner instance
     #    """
@@ -582,6 +590,10 @@ class md:
                 self.dump(i, j)
             trajfile.close()
 
+            if self.cf:
+                np.savetxt("deltaforce"+".run"+str(j)+".dat", self.cflist)
+                self.cflist = np.zeros(self.nph)
+                
             if self.savep:
                 # power spectrum
                 power = np.copy(self.power)
