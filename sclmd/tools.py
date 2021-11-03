@@ -4,6 +4,37 @@
 import numpy as np
 
 
+def dumpdisp(lammpsdata, trajectoriesfiles, index=[1], outputname="dispstructure"):
+    def sumdisp(inputlist):
+        return sum([_ ** 2 for _ in inputlist])
+    def matdisp(matrix):
+        return [sumdisp(_) for _ in matrix]
+    def giveindex(matrix, index):
+        needindex = []
+        for i in index:
+            disp = matdisp(matrix)
+            # needvaule = np.sort(disp)[-index]
+            needindex.append(np.argsort(disp)[-i])
+        return needindex
+    from ovito.io import export_file, import_file
+    print("import LAMMPS data file %s" % lammpsdata)
+    data = import_file(lammpsdata).source.compute(0)
+    intposition = np.array(data.particles.positions).flatten()
+    positionmatrix = []
+    for trajfile in trajectoriesfiles:
+        print("import trajectorie file %s" % trajfile)
+        traj = import_file(trajfile, columns=[
+            "Particle Type", "Position.X", "Position.Y", "Position.Z"])
+        for frame_index in range(traj.source.num_frames):
+            positionmatrix.append(np.array(traj.source.compute(
+                frame_index).particles.positions).flatten())
+    #print(giveindex(positionmatrix-intposition, index))
+    for i, val in enumerate(giveindex(positionmatrix-intposition, index)):
+        data.particles_.positions_[:] = positionmatrix[val].reshape(int(len(positionmatrix[val])/3),3)
+        print("export LAMMPS data file %d" % index[i])
+        export_file(data, outputname+"."+str(index[i])+".data", "lammps/data", atom_style="full")
+
+
 def dumpavetraj(lammpsdata, trajectoriesfiles, position_only=False, outputname="avestructure.data"):
     from ovito.io import export_file, import_file
 
@@ -131,7 +162,7 @@ def eff():
     dynmat = dynmatdat.reshape((dynlen, dynlen))
     #dynmat = (dynmat+dynmat.conjugate().transpose())/2
     eigvals, eigvecs = np.linalg.eigh(dynmat)
-    while not (eigvals>0).all():
+    while not (eigvals > 0).all():
         for i, val in enumerate(eigvals):
             if val < 0:
                 print('False frequency exists in system DOF %i ' % i)
@@ -140,6 +171,7 @@ def eff():
             len(eigvals))*eigvals, np.linalg.inv(eigvecs)])
         eigvals, eigvecs = np.linalg.eigh(dynmat)
     np.savetxt('dynmatmod.dat', dynmat)
+
 
 if __name__ == "__main__":
     from sclmd.tools import dumpavetraj
@@ -152,3 +184,18 @@ if __name__ == "__main__":
                 "avestructure.300.run2.dat", "avestructure.300.run3.dat", "avestructure.300.run4.dat"]
     dumpavetraj(lammps, avefiles, position_only=True,
                 outputname="avestructure.data")
+                
+    from sclmd.tools import dumpdisp
+    lammps = "avestructure.data"
+    trajectories = ["trajectories.100.run0.ani", "trajectories.100.run1.ani",
+                    "trajectories.100.run2.ani", "trajectories.100.run3.ani", 
+                    "trajectories.100.run4.ani", "trajectories.100.run5.ani",
+                    "trajectories.100.run6.ani", "trajectories.100.run7.ani",
+                    "trajectories.100.run8.ani", "trajectories.100.run9.ani",
+                    "trajectories.100.run10.ani", "trajectories.100.run11.ani",
+                    "trajectories.100.run12.ani", "trajectories.100.run13.ani",
+                    "trajectories.100.run14.ani", "trajectories.100.run15.ani",
+                    "trajectories.100.run16.ani", "trajectories.100.run17.ani",
+                    "trajectories.100.run18.ani", "trajectories.100.run19.ani",
+                    ]
+    dumpdisp(lammps, trajectories, index=[1,10,100], outputname="dispstructure")
