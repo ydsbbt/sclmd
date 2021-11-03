@@ -2,7 +2,7 @@
 # -*- coding:utf-8 _*-
 from setuptools import setup, find_packages
 
-VERSION = '0.3.6'
+VERSION = '0.3.7'
 
 setup(
     name='sclmd',
@@ -11,7 +11,7 @@ setup(
     long_description='Molecular dynamics script using a semi-classical generalized Langevin equation',
     keywords='md molecular dynamics quantum Langevin',
     #author='Jing-Tao Lv',
-    #author_email='jtlv@hust.edu.cn',
+    #author_email='jtlu@hust.edu.cn',
     #url='https://github.com/phyjtlu/pymd',
     license='GNU General Public License v3.0',
     packages=find_packages(),
