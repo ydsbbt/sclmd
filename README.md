@@ -26,7 +26,7 @@ echo 'Activate Intel compilation environment'
 source /opt/intel/oneapi/setvars.sh
 cd lammps/src
 echo 'Select LAMMPS packages'
-make yes-body yes-class2 yes-manybody yes-molecule yes-kspace yes-user-reaxc yes-user-phonon
+make yes-body yes-class2 yes-manybody yes-molecule yes-kspace yes-reaxff yes-phonon
 echo 'Compile LAMMPS shared library'
 make -j 8 intel_cpu_intelmpi mode=shlib
 echo 'Install LAMMPS shared library in python'
