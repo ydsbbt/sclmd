@@ -7,12 +7,11 @@ import numpy as np
 def dumpdisp(lammpsdata, trajectoriesfiles, index=[1], outputname="dispstructure"):
     def sumdisp(inputlist):
         return sum([_ ** 2 for _ in inputlist])
-    def matdisp(matrix):
-        return [sumdisp(_) for _ in matrix]
+
     def giveindex(matrix, index):
         needindex = []
         for i in index:
-            disp = matdisp(matrix)
+            disp = [sumdisp(_) for _ in matrix]
             # needvaule = np.sort(disp)[-index]
             needindex.append(np.argsort(disp)[-i])
         return needindex
@@ -30,9 +29,11 @@ def dumpdisp(lammpsdata, trajectoriesfiles, index=[1], outputname="dispstructure
                 frame_index).particles.positions).flatten())
     #print(giveindex(positionmatrix-intposition, index))
     for i, val in enumerate(giveindex(positionmatrix-intposition, index)):
-        data.particles_.positions_[:] = positionmatrix[val].reshape(int(len(positionmatrix[val])/3),3)
+        data.particles_.positions_[:] = positionmatrix[val].reshape(
+            int(len(positionmatrix[val])/3), 3)
         print("export LAMMPS data file %d" % index[i])
-        export_file(data, outputname+"."+str(index[i])+".data", "lammps/data", atom_style="full")
+        export_file(data, outputname+"." +
+                    str(index[i])+".data", "lammps/data", atom_style="full")
 
 
 def dumpavetraj(lammpsdata, trajectoriesfiles, position_only=False, outputname="avestructure.data"):
@@ -184,11 +185,11 @@ if __name__ == "__main__":
                 "avestructure.300.run2.dat", "avestructure.300.run3.dat", "avestructure.300.run4.dat"]
     dumpavetraj(lammps, avefiles, position_only=True,
                 outputname="avestructure.data")
-                
+
     from sclmd.tools import dumpdisp
     lammps = "avestructure.data"
     trajectories = ["trajectories.100.run0.ani", "trajectories.100.run1.ani",
-                    "trajectories.100.run2.ani", "trajectories.100.run3.ani", 
+                    "trajectories.100.run2.ani", "trajectories.100.run3.ani",
                     "trajectories.100.run4.ani", "trajectories.100.run5.ani",
                     "trajectories.100.run6.ani", "trajectories.100.run7.ani",
                     "trajectories.100.run8.ani", "trajectories.100.run9.ani",
@@ -198,4 +199,5 @@ if __name__ == "__main__":
                     "trajectories.100.run16.ani", "trajectories.100.run17.ani",
                     "trajectories.100.run18.ani", "trajectories.100.run19.ani",
                     ]
-    dumpdisp(lammps, trajectories, index=[1,10,100], outputname="dispstructure")
+    dumpdisp(lammps, trajectories, index=[
+             1, 10, 100], outputname="dispstructure")
