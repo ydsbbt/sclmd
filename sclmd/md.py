@@ -356,7 +356,7 @@ class md:
     def CompareForce(self,dynmat):
         self.cf = 1
         self.cfdynmat = dynmat
-        self.cflist = np.zeros(self.nph)
+        self.cflist = []
 
     def vv(self, id):
         """
@@ -370,8 +370,7 @@ class md:
         if self.saveq:
             self.qs[t % self.nmd] = q
         if self.cf:
-            self.cflist = (self.cflist*t+self.potforce(q) -
-                           (-1*mdot(self.dyn, q)))/(t+1)
+            self.cflist.append(self.potforce(q) -(-1*mdot(self.cfdynmat, q)))
 
         # total energy
         #self.etot = np.append(self.etot,self.energy())
@@ -592,8 +591,8 @@ class md:
             trajfile.close()
 
             if self.cf:
-                np.savetxt("deltaforce"+".run"+str(j)+".dat", self.cflist)
-                self.cflist = np.zeros(self.nph)
+                np.save("deltaforce"+".run"+str(j), self.cflist)
+                self.cflist = []
                 
             if self.savep:
                 # power spectrum
