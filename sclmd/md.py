@@ -353,8 +353,9 @@ class md:
                 self.poweratomlist[layers] = powerspecp(
                     self.ps[:, self.atomlist[layers]], self.dt, self.nmd)
 
-    def CompareForce(self):
+    def CompareForce(self,dynmat):
         self.cf = 1
+        self.cfdynmat = dynmat
         self.cflist = np.zeros(self.nph)
 
     def vv(self, id):
