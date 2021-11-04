@@ -5,6 +5,9 @@ import numpy as np
 
 
 def dumpdisp(lammpsdata, trajectoriesfiles, index=[1], outputname="dispstructure"):
+    '''
+    dump the index.th max displacement from MD trajectories files
+    '''
     def sumdisp(inputlist):
         return sum([_ ** 2 for _ in inputlist])
 
