@@ -4,6 +4,28 @@
 import numpy as np
 
 
+def avdf(dffiles=["deltaforce.run0.npy"], outputname="deltaforce-deviation"):
+    '''
+    Analysis of the variance of the difference between potential force and harmonic force
+    '''
+    from tqdm import tqdm
+    print("Import delta force files %s" % str(dffiles))
+    dflist = np.load(dffiles[0])
+    deltatime = len(dflist)
+    print("Delta force loaded from %s" % dffiles[0])
+    print("Each file has %i steps" % deltatime)
+    for f in dffiles[1:]:
+        dflist = np.concatenate((dflist, np.load(f)), axis=0)
+        print("Delta force loaded from %s" % f)
+    for i in tqdm(range(len(dffiles))):
+        #print("Analysis of No.%s variance" % str(i+1))
+        np.savetxt(outputname+str(i)+".data", np.sqrt(
+            np.mean(
+            #    [(var - np.mean(dflist, axis=0))**2 for var in tqdm(dflist[0:int((i+1)*deltatime)])]
+                (dflist[0:int((i+1)*deltatime)] - np.mean(dflist, axis=0))**2
+                , axis=0)))
+
+
 def dumpdisp(lammpsdata, trajectoriesfiles, index=[1], outputname="dispstructure"):
     '''
     dump the index.th max displacement from MD trajectories files
@@ -204,3 +226,13 @@ if __name__ == "__main__":
                     ]
     dumpdisp(lammps, trajectories, index=[
              1, 10, 100], outputname="dispstructure")
+
+    from sclmd.tools import avdf
+
+    fl = ["deltaforce.run1.npy", "deltaforce.run2.npy",
+            "deltaforce.run3.npy", "deltaforce.run4.npy", "deltaforce.run5.npy",
+            "deltaforce.run6.npy", "deltaforce.run7.npy", "deltaforce.run8.npy",
+            "deltaforce.run9.npy", "deltaforce.run10.npy", "deltaforce.run11.npy",
+    ]
+    avdf(fl[0:10])
+
