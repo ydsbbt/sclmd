@@ -353,9 +353,9 @@ class md:
                 self.poweratomlist[layers] = powerspecp(
                     self.ps[:, self.atomlist[layers]], self.dt, self.nmd)
 
-    def CompareForce(self,dynmat):
+    def CompareForce(self, forcedriver):
         self.cf = 1
-        self.cfdynmat = dynmat
+        self.forcedriver = forcedriver
         self.cflist = []
 
     def vv(self, id):
@@ -370,7 +370,7 @@ class md:
         if self.saveq:
             self.qs[t % self.nmd] = q
         if self.cf:
-            self.cflist.append(self.potforce(q) -(-1*mdot(self.cfdynmat, q)))
+            self.cflist.append(self.forcedriver.force(q) + mdot(self.dyn, q))
 
         # total energy
         #self.etot = np.append(self.etot,self.energy())
@@ -591,9 +591,10 @@ class md:
             trajfile.close()
 
             if self.cf:
-                np.save("deltaforce"+".run"+str(j), self.cflist)
+                np.save("deltaforce"+".run"+str(j),
+                        self.cflist/self.forcedriver.conv)
                 self.cflist = []
-                
+
             if self.savep:
                 # power spectrum
                 power = np.copy(self.power)

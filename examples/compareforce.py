@@ -39,10 +39,8 @@ cutslist = [range(70*3, (89+1)*3),
 ecatsl = range(20*3, (69+1)*3)
 ecatsr = range(131*3, (180+1)*3)
 # if slist is not given, md will initialize it using xyz
-mdrun = md(dt, nmd, T, axyz=lmp.axyz,
+mdrun = md(dt, nmd, T, axyz=lmp.axyz,dyn=lmp.dynmat(),
            nstart=nstart, nstop=nstop)
-# attache lammps driver to md
-mdrun.AddPotential(lmp)
 # unit in 0.658211814201041 fs
 damp = 100/0.658211814201041
 
@@ -58,7 +56,7 @@ mdrun.AddBath(ebr)
 
 mdrun.AddConstr(fixatoms)
 
-mdrun.CompareForce(lmp.dynmat())
+mdrun.CompareForce(lmp)
 
 # mdrun.noranvel()
 # mdrun.CalPowerSpec()

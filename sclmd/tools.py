@@ -4,7 +4,7 @@
 import numpy as np
 
 
-def avdf(dffiles=["deltaforce.run0.npy"], outputname="deltaforce-deviation"):
+def avdf(dffiles=["deltaforce.run0.npy"], outputname="deltaforce"):
     '''
     Analysis of the variance of the difference between potential force and harmonic force
     '''
@@ -19,11 +19,11 @@ def avdf(dffiles=["deltaforce.run0.npy"], outputname="deltaforce-deviation"):
         print("Delta force loaded from %s" % f)
     for i in tqdm(range(len(dffiles))):
         #print("Analysis of No.%s variance" % str(i+1))
-        np.savetxt(outputname+str(i)+".data", np.sqrt(
+        mean = np.mean(dflist[0:int((i+1)*deltatime)], axis=0)
+        np.savetxt(outputname+"-mean"+str(i)+".dat", mean)
+        np.savetxt(outputname+"-deviation"+str(i)+".dat", np.sqrt(
             np.mean(
-            #    [(var - np.mean(dflist, axis=0))**2 for var in tqdm(dflist[0:int((i+1)*deltatime)])]
-                (dflist[0:int((i+1)*deltatime)] - np.mean(dflist, axis=0))**2
-                , axis=0)))
+                ((dflist[0:int((i+1)*deltatime)] - mean))**2, axis=0)))
 
 
 def dumpdisp(lammpsdata, trajectoriesfiles, index=[1], outputname="dispstructure"):
@@ -216,23 +216,12 @@ if __name__ == "__main__":
     trajectories = ["trajectories.100.run0.ani", "trajectories.100.run1.ani",
                     "trajectories.100.run2.ani", "trajectories.100.run3.ani",
                     "trajectories.100.run4.ani", "trajectories.100.run5.ani",
-                    "trajectories.100.run6.ani", "trajectories.100.run7.ani",
-                    "trajectories.100.run8.ani", "trajectories.100.run9.ani",
-                    "trajectories.100.run10.ani", "trajectories.100.run11.ani",
-                    "trajectories.100.run12.ani", "trajectories.100.run13.ani",
-                    "trajectories.100.run14.ani", "trajectories.100.run15.ani",
-                    "trajectories.100.run16.ani", "trajectories.100.run17.ani",
-                    "trajectories.100.run18.ani", "trajectories.100.run19.ani",
                     ]
     dumpdisp(lammps, trajectories, index=[
              1, 10, 100], outputname="dispstructure")
 
     from sclmd.tools import avdf
-
     fl = ["deltaforce.run1.npy", "deltaforce.run2.npy",
-            "deltaforce.run3.npy", "deltaforce.run4.npy", "deltaforce.run5.npy",
-            "deltaforce.run6.npy", "deltaforce.run7.npy", "deltaforce.run8.npy",
-            "deltaforce.run9.npy", "deltaforce.run10.npy", "deltaforce.run11.npy",
-    ]
-    avdf(fl[0:10])
-
+          "deltaforce.run3.npy", "deltaforce.run4.npy", "deltaforce.run5.npy",
+          ]
+    avdf(fl)
