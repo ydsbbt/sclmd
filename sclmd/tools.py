@@ -4,11 +4,16 @@
 import numpy as np
 
 
-def avdf(dffiles=["deltaforce.run0.npy"], outputname="deltaforce"):
+def avdf(dffiles=["deltaforce.run0.npy"], outputname="deltaforce", abs=False):
     '''
     Analysis of the variance of the difference between potential force and harmonic force
     '''
     from tqdm import tqdm
+    def ifabs(x):
+        if abs:
+            return np.abs(x)
+        else:
+            return x
     print("Import delta force files %s" % str(dffiles))
     dflist = np.load(dffiles[0])
     deltatime = len(dflist)
@@ -19,11 +24,11 @@ def avdf(dffiles=["deltaforce.run0.npy"], outputname="deltaforce"):
         print("Delta force loaded from %s" % f)
     for i in tqdm(range(len(dffiles))):
         #print("Analysis of No.%s variance" % str(i+1))
-        mean = np.mean(dflist[0:int((i+1)*deltatime)], axis=0)
+        mean = np.mean(ifabs(dflist[0:int((i+1)*deltatime)]), axis=0)
         np.savetxt(outputname+"-mean"+str(i)+".dat", mean)
         np.savetxt(outputname+"-deviation"+str(i)+".dat", np.sqrt(
             np.mean(
-                ((dflist[0:int((i+1)*deltatime)] - mean))**2, axis=0)))
+                ((ifabs(dflist[0:int((i+1)*deltatime)]) - mean))**2, axis=0)))
 
 
 def dumpdisp(lammpsdata, trajectoriesfiles, index=[1], outputname="dispstructure"):
