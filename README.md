@@ -8,33 +8,24 @@ The important feature of this script is that, the statistics of the bath degrees
 
 ## Install
 
-Install LAMMPS and required python packages, which can be done by following script.
+```bash
+pip install sclmd
+```
+
+Install LAMMPS python package as force driver
 
 ```bash
-#!/bin/sh
-# install.sh Compile & install LAMMPS shared library with Intel® oneAPI HPC Toolkit https://software.intel.com/content/www/us/en/develop/tools/oneapi.html & required packages in python
-# Usage: sh install.sh
-# -------------------------------------------------------
-if [ -d 'lammps' ]
-then
-    echo 'LAMMPS already exists' 
-else
-    echo 'Download LAMMPS source code'
-    git clone https://github.com/lammps/lammps.git -b stable
-fi
-echo 'Activate Intel compilation environment'
+# Compile & install LAMMPS shared library with Intel® oneAPI HPC Toolkit https://software.intel.com/content/www/us/en/develop/tools/oneapi.html
+git clone https://github.com/lammps/lammps.git -b stable
+# Activate Intel compilation environment
 source /opt/intel/oneapi/setvars.sh
 cd lammps/src
-echo 'Select LAMMPS packages'
+# Select LAMMPS packages
 make yes-body yes-class2 yes-manybody yes-molecule yes-kspace yes-reaxff yes-phonon
-echo 'Compile LAMMPS shared library'
+# Compile LAMMPS shared library
 make -j 8 intel_cpu_intelmpi mode=shlib
-echo 'Install LAMMPS shared library in python'
+# Install LAMMPS shared library in python
 make install-python
-echo 'Compile LAMMPS executable file'
-make -j 8 intel_cpu_intelmpi
-echo 'Install required python packages'
-python -m pip install -U sclmd
 ```
 
 ## Examples

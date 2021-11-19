@@ -8,3 +8,4 @@ clean.sh
 *.nc
 log.lammps
 .vscode
+*.pyc
