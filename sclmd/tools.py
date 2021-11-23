@@ -9,6 +9,7 @@ def avdf(dffiles=["deltaforce.run0.npy"], outputname="deltaforce", abs=False):
     Analysis of the variance of the difference between potential force and harmonic force
     '''
     from tqdm import tqdm
+
     def ifabs(x):
         if abs:
             return np.abs(x)
@@ -133,7 +134,7 @@ def calHF(dlist=1, bathnum=2):
                '.dat', np.transpose(balancekb))
 
 
-def calTC(delta, dlist=1, L=None, A=None):
+def calTC(delta, dlist=1, bathnum=2, L=None, A=None):
     # L，A units in Angstrom and Angstrom**2, respectively
     import glob
 
@@ -146,10 +147,10 @@ def calTC(delta, dlist=1, L=None, A=None):
             for line in f:
                 temperture = float(line.split()[1])
     dlist = list(range(dlist))
-    times = int(len(glob.glob('kappa.*.bath*.run*.dat'))/2)
-    kb = np.empty([2, times])
+    times = int(len(glob.glob('kappa.*.bath0.run*.dat')))
+    kb = np.empty([bathnum, times])
 
-    for i in range(2):
+    for i in range(bathnum):
         for j in range(times):
             kappafile = "kappa." + \
                 str(int(temperture))+".bath"+str(i)+".run"+str(j)+".dat"
@@ -159,18 +160,31 @@ def calTC(delta, dlist=1, L=None, A=None):
                         kb[i][j] = line.split()[2]
 #                        temperture=float(line.split()[1])
     if delta != 0:
-        kappa = (kb[0]-kb[1])/2/(delta*temperture)
-        kappa = np.delete(kappa, dlist)
-        # for i in range(len(kappa)):
-        #    kappa[i]=np.mean(kappa[0:i+1])
-
+        if bathnum == 2:
+            kappa = (kb[0]-kb[1])/2/(delta*temperture)
+            kappa = np.delete(kappa, dlist)
+            # for i in range(len(kappa)):
+            #    kappa[i]=np.mean(kappa[0:i+1])
+        elif bathnum == 3:
+            kappa = (kb[0]+kb[1]-kb[2])/4/(delta*temperture)
+            kappa = np.delete(kappa, dlist)
         np.savetxt('thermalconductance.'+str(int(temperture))+'.dat',
                    (np.mean(kappa), np.std(kappa)), header="Mean(nW/K) Std(nW/K)")
         if L is not None and A is not None:
             np.savetxt('thermalconductivity.'+str(int(temperture))+'.dat',
                        (np.mean(kappa*L/A*10), np.std(kappa*L/A*10)), header="Mean(W/m-K) Std(W/m-K)")
     else:
-        print("delta=0, no thermal conductance/conductivity calculated.")
+        #print("delta=0, no thermal conductance/conductivity calculated.")
+        if bathnum == 2:
+            kappa = (kb[0]-kb[1])/2
+            kappa = np.delete(kappa, dlist)
+            # for i in range(len(kappa)):
+            #    kappa[i]=np.mean(kappa[0:i+1])
+        elif bathnum == 3:
+            kappa = -(kb[0]+kb[1]-kb[2])/4
+            kappa = np.delete(kappa, dlist)
+        np.savetxt('heatflux-between-baths.'+str(int(temperture))+'.dat',
+                   (np.mean(kappa), np.std(kappa)), header="Mean(nW) Std(nW)")
 
 
 def get_atomname(mass):
