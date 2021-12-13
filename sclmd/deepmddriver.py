@@ -59,3 +59,10 @@ class deepmddriver():
 
     def energy(self):
         return self.e
+
+if __name__ == '__main__':
+    dp = deepmddriver('water.lmp', 'lammps/lmp', 'deepmd.pkl')
+    print('Energy: ',dp.energy())
+    print('Structure: ',dp.axyz)
+    print('Force init: ',dp.f0)
+    print('Delta Force at q=0: ',dp.force(np.zeros(3*dp.number)))

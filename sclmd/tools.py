@@ -218,6 +218,17 @@ def eff():
     np.savetxt('dynmatmod.dat', dynmat)
 
 
+def predeepmd(infile, fmt, outfile='deepmd_data'):
+    '''
+    pre-process deepmd input traning data
+    https://github.com/deepmodeling/dpdata#load-data
+    '''
+    import dpdata
+
+    dsys = dpdata.LabeledSystem(infile, fmt)
+    dsys.to('deepmd/npy', outfile, set_size=dsys.get_nframes())
+
+
 if __name__ == "__main__":
     from sclmd.tools import dumpavetraj
     lammps = "structure.data"
