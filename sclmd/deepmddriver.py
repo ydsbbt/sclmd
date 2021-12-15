@@ -17,7 +17,7 @@ class deepmddriver():
         str = dpdata.LabeledSystem(strinfile, fmt)
         #str.to('lammps/lmp', 'data.lmp', frame_idx=0)
         #str.to('vasp/poscar', 'POSCAR.vasp', frame_idx=0)
-        self.number = sum(str['atom_types'])
+        self.number = len(str['atom_types'])
         self.type = str['atom_types']
         atomname = str['atom_names']
         mass = [get_atommass(el) for el in atomname]
@@ -48,7 +48,7 @@ class deepmddriver():
     def absforce(self, q):
         self.e, self.f, self.v = self.dp.eval(
             self.newx(q), self.cell, self.type)
-        return self.conv*np.array(self.f)
+        return self.conv*np.array(self.f.flatten())
 
     def initforce(self):
         print("Calculate zero displacement force")
@@ -61,7 +61,7 @@ class deepmddriver():
         return self.e
 
 if __name__ == '__main__':
-    dp = deepmddriver('water.lmp', 'lammps/lmp', 'deepmd.pkl')
+    dp = deepmddriver('OUTCAR', 'vasp/OUTCAR', 'graph.pb')
     print('Energy: ',dp.energy())
     print('Structure: ',dp.axyz)
     print('Force init: ',dp.f0)

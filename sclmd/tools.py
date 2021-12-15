@@ -197,6 +197,15 @@ def get_atomname(mass):
         if abs(mass-value) < 0.01:
             return key
 
+def get_atommass(name):
+    """
+    get the element mass from its atomic name by checking the dictionary
+    """
+    import sclmd.units as U
+
+    for key, value in list(U.AtomicMassTable.items()):
+        if name == key:
+            return value
 
 def eff():
     '''
