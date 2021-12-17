@@ -5,7 +5,6 @@
 # Adapted from LAMMPS python wraper
 
 import ctypes
-import sys
 
 import numpy as np
 from lammps import lammps
@@ -33,8 +32,7 @@ class lammpsdriver(lammps):
         elif self.eunit == "Kcal/mole":
             self.para = 0.04336344201657351
         else:
-            print("Wrong vaule in eunit")
-            sys.exit(0)
+            raise ValueError("Energy unit not recognized")
         # start lammps
         self.start()
 
