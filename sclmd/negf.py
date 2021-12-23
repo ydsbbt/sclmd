@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 
-import sys
 import numpy as np
 from lammps import lammps
 
 
 class bpt:
     # Use NEGF to calculate ballistic phonon transport
-    def __init__(self, infile, maxomega, damp, dofatomofbath, dofatomfixed=[[], []], dynmatfile=None, num=1000, vector=False):
+    def __init__(self, infile, maxomega, damp, dofatomofbath, dofatomfixed=[[], []], dynmatfile=None, num=1000):
         print('Class init')
         # reduced Planck constant unit in: eV*ps
         self.rpc = 6.582119569e-4
@@ -18,10 +17,23 @@ class bpt:
         self.maxomega = maxomega/self.rpc
         self.intnum = num
         self.dofatomfixed = dofatomfixed
+        self.isbias = False
+        self.dofatomofbias = []
         self.dofatomofbath = dofatomofbath
         self.dynmatfile = dynmatfile
         self.getdynmat(infile)
-        self.gettm(vector)
+        #self.gettm(vector)
+
+    def setbias(self, bias, bdamp=None, chiplus=None, chiminus=None, dofatomofbias=[]):
+        np.seterr(divide='ignore', invalid='ignore')
+        self.isbias = True
+        self.bias = bias
+        self.biasgamma = bdamp
+        self.chiplus = chiplus
+        self.chiminus = chiminus
+        self.dofatomofbias = dofatomofbias
+        if len(self.biasgamma) != len(self.chiminus) or len(self.biasgamma) != len(self.chiplus) or len(self.biasgamma) != len(self.dofatomofbias):
+            raise ValueError('Bias parameters not set correctly')
 
     def getdynmat(self, infile):
         lmp = lammps()
@@ -58,8 +70,7 @@ class bpt:
         self.doffreeatom = 0
         dynlen = int(3*np.sqrt(len(dynmatdat)/3))
         if dynlen != self.natoms*3:
-            print('System DOF test failed after load dynmat, check again')
-            sys.exit()
+            raise ValueError('System DOF test failed after load dynmat, check again')
         self.dynmat = dynmatdat.reshape((dynlen, dynlen))
         self.dynmat = np.delete(self.dynmat, self.dofatomfixed[0], axis=0)
         self.dynmat = np.delete(self.dynmat, self.dofatomfixed[0], axis=1)
@@ -68,8 +79,7 @@ class bpt:
         self.dynmat = np.delete(self.dynmat, [
                                 dof-len(self.dofatomfixed[0]) for dof in self.dofatomfixed[1]], axis=1)
         if len(self.xyz) != len(self.dynmat):
-            print('System DOF test failed after atoms reduced, check again')
-            sys.exit()
+            raise ValueError('System DOF test failed after atoms reduced, check again')
         ffi = []
         print('Calculate angular frequency')
         eigvals, self.eigvecs = np.linalg.eigh(self.dynmat)
@@ -87,7 +97,7 @@ class bpt:
         np.savetxt('omegas.dat', self.omegas)
         np.savetxt('eigvecs.dat', self.eigvecs)
 
-    def gettm(self, vector):
+    def gettm(self, vector=False):
         print('Calculate transmission')
         x = np.linspace(0, self.maxomega, self.intnum+1)
         if vector:
@@ -133,12 +143,22 @@ class bpt:
         print('Power spectrum saved')
 
     def selfenergy(self, omega, dofatoms):
-        return -1j*omega*(1/self.damp)*self.atomofbath(dofatoms)
-
-    def atomofbath(self, dofatoms):
-        semat = np.zeros((self.natoms*3, self.natoms*3))
+        semat = np.zeros((self.natoms*3, self.natoms*3), dtype=np.complex_)
         for dofatom in dofatoms:
-            semat[dofatom][dofatom] = 1
+            semat[dofatom][dofatom] = -1j*omega/self.damp
+        return self.cleanse(semat)
+
+    def biasselfenergy(self, omega, dofatoms):
+        if self.isbias:
+            semat = np.zeros((self.natoms*3, self.natoms*3), dtype=np.complex_)
+            semat[dofatoms,:][:,dofatoms] = -1j*omega / \
+                    self.biasgamma-self.bias/self.chiminus
+            #print('Bias atom: \n', np.diag(semat))
+            return self.cleanse(semat)
+        else:
+            return 0
+
+    def cleanse(self, semat):
         semat = np.delete(semat, self.dofatomfixed[0], axis=0)
         semat = np.delete(semat, self.dofatomfixed[0], axis=1)
         semat = np.delete(semat, [dof-len(self.dofatomfixed[0])
@@ -146,13 +166,12 @@ class bpt:
         semat = np.delete(semat, [dof-len(self.dofatomfixed[0])
                                   for dof in self.dofatomfixed[1]], axis=1)
         if len(semat) != len(self.dynmat) or self.natoms*3 != len(self.dofatomfixed[0]) + len(self.dofatomfixed[1]) + len(semat):
-            print('System DOF test failed, check again')
-            sys.exit()
+            raise ValueError('System DOF test failed, check again')
         return semat
 
     def retargf(self, omega):
         # retarded Green function
-        return np.linalg.inv((omega+1e-9j)**2*np.identity(len(self.dynmat))-self.dynmat-self.selfenergy(omega, self.dofatomofbath[0])-self.selfenergy(omega, self.dofatomofbath[1]))
+        return np.linalg.inv((omega+1e-9j)**2*np.identity(len(self.dynmat))-self.dynmat-self.selfenergy(omega, self.dofatomofbath[0])-self.selfenergy(omega, self.dofatomofbath[1])-self.biasselfenergy(omega, self.dofatomofbias))
 
     def gamma(self, Pi):
         return -1j*(Pi-Pi.conjugate().transpose())
@@ -177,6 +196,7 @@ class bpt:
         # Transmission
         return np.real(np.trace(np.dot(np.dot(np.dot(self.retargf(omega), self.gamma(self.selfenergy(
             omega, self.dofatomofbath[0]))), self.retargf(omega).conjugate().transpose()), self.gamma(self.selfenergy(omega, self.dofatomofbath[1])))))
+        # return np.real(np.trace(np.linalg.multi_dot([self.retargf(omega),self.gamma(self.selfenergy(omega, self.dofatomofbath[0])),self.retargf(omega).conjugate().transpose(),self.gamma(self.selfenergy(omega, self.dofatomofbath[1]))])))
 
     def thermalcurrent(self, T, delta):
         # def f(omega):
@@ -197,8 +217,7 @@ class bpt:
         def trape(function):
             n = len(self.tmnumber[:, 0]) - 1
             if n != self.intnum:
-                print('Error in number of omega')
-                sys.exit()
+                raise ValueError('Error in number of omega')
             function = np.vectorize(function)
             arr = function(range(n+1))
             return (float(self.tmnumber[-1, 0] - self.tmnumber[0, 0])/n/2.)*(2*arr.sum() - arr[0] - arr[-1])
@@ -259,7 +278,6 @@ if __name__ == '__main__':
     '''
     import time
     import numpy as np
-    from sclmd.negf import bpt
     from matplotlib import pyplot as plt
     infile = ['atom_style full',
               'units metal',
@@ -271,7 +289,8 @@ if __name__ == '__main__':
     time_start = time.time()
     atomfixed = [range(0*3, (19+1)*3), range(181*3, (200+1)*3)]
     atomofbath = [range(20*3, (69+1)*3), range(131*3, (180+1)*3)]
-    mybpt = bpt(infile, 0.25, 0.1, atomofbath, atomfixed, 100)
+    mybpt = bpt(infile, 0.25, 0.1, atomofbath, atomfixed)
+    mybpt.gettm()
     mybpt.plotresult()
     # T_H/C = T*(1±delta/2)
     T = [100, 200, 300, 400, 500, 600, 700,
@@ -282,12 +301,5 @@ if __name__ == '__main__':
         thermalconductance.append(
             [temp, mybpt.thermalconductance(temp, delta)])
     mybpt.getps(300, 0.5, 1000)
-    np.savetxt('thermalconductance.dat', thermalconductance)
-    plt.figure(5)
-    plt.plot(np.array(thermalconductance)[
-        :, 0], np.array(thermalconductance)[:, 1])
-    plt.xlabel('Temperature(K)')
-    plt.ylabel('Thermal Conductance(nW/K)')
-    plt.savefig('thermalconductance.png')
-    time_end = time.time()
-    print('time cost', time_end-time_start, 's')
+    #mybpt.setbias(0.6, bdamp=None, chiplus=None, chiminus=None, dofatomofbias=[])
+    #mybpt.getps(300, 0.5, 1000, dofatomofbias=[], filename='biascenter')
