@@ -74,6 +74,7 @@ class bpt:
             raise ValueError(
                 'System DOF test failed after load dynmat, check again')
         self.dynmat = dynmatdat.reshape((dynlen, dynlen))
+        self.dynmat = (self.dynmat+self.dynmat.transpose())/2
         self.dynmat = np.delete(self.dynmat, self.dofatomfixed[0], axis=0)
         self.dynmat = np.delete(self.dynmat, self.dofatomfixed[0], axis=1)
         self.dynmat = np.delete(self.dynmat, [

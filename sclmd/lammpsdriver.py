@@ -96,7 +96,9 @@ class lammpsdriver(lammps):
         dynmatdat = np.loadtxt("dynmat.dat") # Dynmat units in ps^-2, THz^2
         dynlen = int(3*np.sqrt(len(dynmatdat)/3))
         rpc = 6.582119569e-4 # Reduced Planck constant in eV*ps
-        return dynmatdat.reshape((dynlen, dynlen))*rpc**2 # Dynmat units in eV^2
+        dynmat = dynmatdat.reshape((dynlen, dynlen)) * \
+            rpc**2  # Dynmat units in eV^2
+        return (dynmat+dynmat.transpose())/2
 
     #def updatedynmat(self, q):
     #    displacement = np.amax(np.abs(self.conv*q))
