@@ -22,12 +22,13 @@ class bpt:
         self.dofatomofbath = dofatomofbath
         self.dynmatfile = dynmatfile
         self.getdynmat(infile)
-        #self.gettm(vector)
+        # self.gettm(vector)
 
     def setbias(self, bias, bdamp=None, chiplus=None, chiminus=None, dofatomofbias=[]):
+        # units in eV & ps
         np.seterr(divide='ignore', invalid='ignore')
         self.isbias = True
-        self.bias = bias
+        self.bias = bias/self.rpc
         self.biasgamma = bdamp
         self.chiplus = chiplus
         self.chiminus = chiminus
@@ -70,7 +71,8 @@ class bpt:
         self.doffreeatom = 0
         dynlen = int(3*np.sqrt(len(dynmatdat)/3))
         if dynlen != self.natoms*3:
-            raise ValueError('System DOF test failed after load dynmat, check again')
+            raise ValueError(
+                'System DOF test failed after load dynmat, check again')
         self.dynmat = dynmatdat.reshape((dynlen, dynlen))
         self.dynmat = np.delete(self.dynmat, self.dofatomfixed[0], axis=0)
         self.dynmat = np.delete(self.dynmat, self.dofatomfixed[0], axis=1)
@@ -79,7 +81,8 @@ class bpt:
         self.dynmat = np.delete(self.dynmat, [
                                 dof-len(self.dofatomfixed[0]) for dof in self.dofatomfixed[1]], axis=1)
         if len(self.xyz) != len(self.dynmat):
-            raise ValueError('System DOF test failed after atoms reduced, check again')
+            raise ValueError(
+                'System DOF test failed after atoms reduced, check again')
         ffi = []
         print('Calculate angular frequency')
         eigvals, self.eigvecs = np.linalg.eigh(self.dynmat)
@@ -116,11 +119,11 @@ class bpt:
 
     def getps(self, T, maxomega, intnum, atomlist=None, filename=None, vector=False):
         if filename is not None:
-            print('Calculate power spectrum at '+str(T)+'K of'+str(filename))
+            print('Calculate power spectrum at '+str(T)+'K of '+str(filename))
         else:
             print('Calculate power spectrum at '+str(T)+'K')
         if atomlist is None:
-            print("Power spectrum of all atoms")
+            # print("Power spectrum of all atoms")
             atomlist = np.array(range(0, len(self.dynmat))
                                 ) + len(self.dofatomfixed[0])
         x2 = np.linspace(0, maxomega/self.rpc, intnum+1)
@@ -142,21 +145,43 @@ class bpt:
                        np.column_stack((self.psnumber[:, 0]*self.rpc, self.psnumber[:, 1])))
         print('Power spectrum saved')
 
-    def selfenergy(self, omega, dofatoms):
+    def retarselfenergy(self, omega, dofatoms):
         semat = np.zeros((self.natoms*3, self.natoms*3), dtype=np.complex_)
         for dofatom in dofatoms:
             semat[dofatom][dofatom] = -1j*omega/self.damp
         return self.cleanse(semat)
 
-    def biasselfenergy(self, omega, dofatoms):
+    def advanselfenergy(self, omega, dofatoms):
+        return self.retarselfenergy(omega, dofatoms).conjugate().transpose()
+
+    def retarbiasselfenergy(self, omega, dofatoms):
         if self.isbias:
             semat = np.zeros((self.natoms*3, self.natoms*3), dtype=np.complex_)
-            semat[dofatoms,:][:,dofatoms] = -1j*omega / \
-                    self.biasgamma-self.bias/self.chiminus
+            semat[dofatoms, :][:, dofatoms] = -1j*omega / \
+                self.biasgamma-self.bias/self.chiminus
             #print('Bias atom: \n', np.diag(semat))
             return self.cleanse(semat)
         else:
             return 0
+
+    def advanbiasselfenergy(self, omega, dofatoms):
+        return self.retarbiasselfenergy(omega, dofatoms).conjugate().transpose()
+
+    def kselfenergy(self, omega, T, dofatoms):
+        return -1j*np.imag(self.retarselfenergy(omega, dofatoms))*(self.bosedist(omega, T)+0.5)
+
+    def kbiasselfenergy(self, omega, T, dofatoms):
+        # print('Calculate bias self energy')
+        if self.isbias:
+            semat = np.zeros((self.natoms*3, self.natoms*3), dtype=np.complex_)
+            semat[dofatoms, :][:, dofatoms] = ((self.chiplus-1j*self.chiminus)*(self.rpc*(omega+self.bias))*(1/(np.tanh((self.rpc*(omega+self.bias))/(2*self.bc*T)))-1/(np.tanh(self.rpc*omega/(
+                2*self.bc*T))))+(self.chiplus+1j*self.chiminus)*(self.rpc*omega-self.bias)*(1/(np.tanh((self.rpc*omega-self.bias)/(2*self.bc*T)))-1/(np.tanh(self.rpc*omega/(2*self.bc*T)))))/2
+            return (-1j*self.retarbiasselfenergy(omega, dofatoms))/np.tanh(self.rpc*omega/(2*self.bc*T))+self.cleanse(semat)
+        else:
+            return 0
+
+    def totalkselfenergy(self, omega, T):
+        return self.kselfenergy(omega, T, self.dofatomofbath[0])+self.kselfenergy(omega, T, self.dofatomofbath[1])+self.kbiasselfenergy(omega, T, self.dofatomofbias)
 
     def cleanse(self, semat):
         semat = np.delete(semat, self.dofatomfixed[0], axis=0)
@@ -171,7 +196,11 @@ class bpt:
 
     def retargf(self, omega):
         # retarded Green function
-        return np.linalg.inv((omega+1e-9j)**2*np.identity(len(self.dynmat))-self.dynmat-self.selfenergy(omega, self.dofatomofbath[0])-self.selfenergy(omega, self.dofatomofbath[1])-self.biasselfenergy(omega, self.dofatomofbias))
+        return np.linalg.inv((omega+1e-9j)**2*np.identity(len(self.dynmat))-self.dynmat-self.retarselfenergy(omega, self.dofatomofbath[0])-self.retarselfenergy(omega, self.dofatomofbath[1])-self.retarbiasselfenergy(omega, self.dofatomofbias))
+
+    def advangf(self, omega):
+        # advanced Green function
+        return np.linalg.inv((omega+1e-9j)**2*np.identity(len(self.dynmat))-self.dynmat-self.advanselfenergy(omega, self.dofatomofbath[0])-self.advanselfenergy(omega, self.dofatomofbath[1])-self.advanbiasselfenergy(omega, self.dofatomofbias))
 
     def gamma(self, Pi):
         return -1j*(Pi-Pi.conjugate().transpose())
@@ -188,15 +217,20 @@ class bpt:
             return 1/(np.exp(self.rpc*omega/self.bc/T)-1)
 
     def ps(self, omega, T, atomlist):
-        # Power spectrum of selected atoms
-        dofatomse = np.array(atomlist)-len(self.dofatomfixed[0])
-        return -2*omega**2*self.bosedist(omega, T)*np.trace(np.imag(self.retargf(omega)[dofatomse][:, dofatomse]))
+        if not self.isbias:
+            # Power spectrum of selected atoms
+            dofatomse = np.array(atomlist)-len(self.dofatomfixed[0])
+            return -2*omega**2*self.bosedist(omega, T)*np.trace(np.imag(self.retargf(omega)[dofatomse][:, dofatomse]))
+        elif self.isbias:
+            # Power spectrum of bias atoms
+            return np.trace(np.linalg.multi_dot([self.retargf(omega), self.totalkselfenergy(omega, T), self.advangf(omega)]))
+        else:
+            raise ValueError('Bias is not defined')
 
     def tm(self, omega):
         # Transmission
-        return np.real(np.trace(np.dot(np.dot(np.dot(self.retargf(omega), self.gamma(self.selfenergy(
-            omega, self.dofatomofbath[0]))), self.retargf(omega).conjugate().transpose()), self.gamma(self.selfenergy(omega, self.dofatomofbath[1])))))
-        # return np.real(np.trace(np.linalg.multi_dot([self.retargf(omega),self.gamma(self.selfenergy(omega, self.dofatomofbath[0])),self.retargf(omega).conjugate().transpose(),self.gamma(self.selfenergy(omega, self.dofatomofbath[1]))])))
+        return np.real(np.trace(np.dot(np.dot(np.dot(self.retargf(omega), self.gamma(self.retarselfenergy(omega, self.dofatomofbath[0]))), self.retargf(omega).conjugate().transpose()), self.gamma(self.retarselfenergy(omega, self.dofatomofbath[1])))))
+        # return np.real(np.trace(np.linalg.multi_dot([self.retargf(omega),self.gamma(self.retarselfenergy(omega, self.dofatomofbath[0])),self.retargf(omega).conjugate().transpose(),self.gamma(self.retarselfenergy(omega, self.dofatomofbath[1]))])))
 
     def thermalcurrent(self, T, delta):
         # def f(omega):
