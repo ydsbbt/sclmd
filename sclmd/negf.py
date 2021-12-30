@@ -13,7 +13,7 @@ class bpt:
         self.rpc = 6.582119569e-4
         # Boltzmann constant unit in: eV/K
         self.bc = 8.617333262e-5
-        self.damp = damp
+        self.damp = damp  # ps
         self.maxomega = maxomega/self.rpc
         self.intnum = num
         self.dofatomfixed = dofatomfixed
@@ -25,7 +25,7 @@ class bpt:
         # self.gettm(vector)
 
     def setbias(self, bias, bdamp=None, chiplus=None, chiminus=None, dofatomofbias=[]):
-        # units in eV & ps
+        # units in eV & ps^-1
         np.seterr(divide='ignore', invalid='ignore')
         self.isbias = True
         self.bias = bias/self.rpc
@@ -149,7 +149,7 @@ class bpt:
     def retarselfenergy(self, omega, dofatoms):
         semat = np.zeros((self.natoms*3, self.natoms*3), dtype=np.complex_)
         for dofatom in dofatoms:
-            semat[dofatom][dofatom] = -1j*omega/self.damp
+            semat[dofatom, dofatom] = -1j*omega/self.damp
         return self.cleanse(semat)
 
     def advanselfenergy(self, omega, dofatoms):
@@ -158,8 +158,10 @@ class bpt:
     def retarbiasselfenergy(self, omega, dofatoms):
         if self.isbias:
             semat = np.zeros((self.natoms*3, self.natoms*3), dtype=np.complex_)
-            semat[dofatoms, :][:, dofatoms] = -1j*omega / \
-                self.biasgamma-self.bias/self.chiminus
+            t1, t2 = dofatoms[0], dofatoms[-1] + \
+                1  # TODO Need a more elegant way
+            semat[t1:t2, t1:t2] = -1j*omega * \
+                self.biasgamma-self.bias*self.chiminus
             #print('Bias atom: \n', np.diag(semat))
             return self.cleanse(semat)
         else:
@@ -169,15 +171,17 @@ class bpt:
         return self.retarbiasselfenergy(omega, dofatoms).conjugate().transpose()
 
     def kselfenergy(self, omega, T, dofatoms):
-        return -1j*np.imag(self.retarselfenergy(omega, dofatoms))*(self.bosedist(omega, T)+0.5)
+        return -2*np.imag(self.retarselfenergy(omega, dofatoms))*self.bosedist(omega, T)
 
     def kbiasselfenergy(self, omega, T, dofatoms):
         # print('Calculate bias self energy')
         if self.isbias:
             semat = np.zeros((self.natoms*3, self.natoms*3), dtype=np.complex_)
-            semat[dofatoms, :][:, dofatoms] = ((self.chiplus-1j*self.chiminus)*(self.rpc*(omega+self.bias))*(1/(np.tanh((self.rpc*(omega+self.bias))/(2*self.bc*T)))-1/(np.tanh(self.rpc*omega/(
-                2*self.bc*T))))+(self.chiplus+1j*self.chiminus)*(self.rpc*omega-self.bias)*(1/(np.tanh((self.rpc*omega-self.bias)/(2*self.bc*T)))-1/(np.tanh(self.rpc*omega/(2*self.bc*T)))))/2
-            return (-1j*self.retarbiasselfenergy(omega, dofatoms))/np.tanh(self.rpc*omega/(2*self.bc*T))+self.cleanse(semat)
+            t1, t2 = dofatoms[0], dofatoms[-1] + \
+                1  # TODO Need a more elegant way
+            semat[t1:t2, t1:t2] = ((self.chiplus-1j*self.chiminus)*(omega+self.bias)*(2*self.bosedist(omega+self.bias, T)-2*self.bosedist(
+                omega, T))+(self.chiplus+1j*self.chiminus)*(omega-self.bias)*(2*self.bosedist(omega-self.bias, T)-2*self.bosedist(omega, T)))/2
+            return (1j*self.retarbiasselfenergy(omega, dofatoms))*2*self.bosedist(omega, T)+self.cleanse(semat)
         else:
             return 0
 
@@ -218,13 +222,14 @@ class bpt:
             return 1/(np.exp(self.rpc*omega/self.bc/T)-1)
 
     def ps(self, omega, T, atomlist):
+        dofatomse = np.array(atomlist)-len(self.dofatomfixed[0])
         if not self.isbias:
             # Power spectrum of selected atoms
-            dofatomse = np.array(atomlist)-len(self.dofatomfixed[0])
             return -2*omega**2*self.bosedist(omega, T)*np.trace(np.imag(self.retargf(omega)[dofatomse][:, dofatomse]))
+            #return omega**2*np.trace(np.real(np.linalg.multi_dot([self.retargf(omega), self.totalkselfenergy(omega, T), self.advangf(omega)])[dofatomse][:, dofatomse]))
         elif self.isbias:
             # Power spectrum of bias atoms
-            return np.trace(np.linalg.multi_dot([self.retargf(omega), self.totalkselfenergy(omega, T), self.advangf(omega)]))
+            return omega**2*np.trace(np.real(np.linalg.multi_dot([self.retargf(omega), self.totalkselfenergy(omega, T), self.advangf(omega)])[dofatomse][:, dofatomse]))
         else:
             raise ValueError('Bias is not defined')
 
