@@ -197,6 +197,7 @@ def get_atomname(mass):
         if abs(mass-value) < 0.01:
             return key
 
+
 def get_atommass(name):
     """
     get the element mass from its atomic name by checking the dictionary
@@ -206,6 +207,7 @@ def get_atommass(name):
     for key, value in list(U.AtomicMassTable.items()):
         if name == key:
             return value
+
 
 def eff():
     '''
@@ -227,7 +229,7 @@ def eff():
     np.savetxt('dynmatmod.dat', dynmat)
 
 
-def predeepmd(infile, fmt, outfile='deepmd_data',size=5):
+def predeepmd(infile, fmt, outfile='deepmd_data', size=5):
     '''
     pre-process deepmd input traning data
     https://github.com/deepmodeling/dpdata#load-data
@@ -235,7 +237,32 @@ def predeepmd(infile, fmt, outfile='deepmd_data',size=5):
     import dpdata
 
     dsys = dpdata.LabeledSystem(infile, fmt)
+    dsys.to('vasp/poscar', 'POSCAR.vasp', frame_idx=0)
+    dsys.to('lammps/lmp', 'data.lmp', frame_idx=0)
+    print(len(dsys['atom_types']))
+    print(dsys['atom_names'])
+    print(dsys.get_nframes())
     dsys.to('deepmd/npy', outfile, set_size=int(dsys.get_nframes()/size))
+
+
+def visualtrain(infile):
+    '''
+    pre-process deepmd input traning data
+    '''
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    data = np.genfromtxt(infile, names=True)
+    for name in data.dtype.names[1:-1]:
+        plt.plot(data['step'], data[name], label=name)
+    plt.legend()
+    plt.xlabel('Step')
+    plt.ylabel('Loss')
+    plt.xscale('symlog')
+    plt.yscale('symlog')
+    plt.grid()
+    # plt.show()
+    plt.savefig('lcurve.png')
 
 
 if __name__ == "__main__":
