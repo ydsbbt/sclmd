@@ -199,6 +199,12 @@ class md:
     def SaveAll(self, save=True):
         self.saveall = save
 
+    def Savep(self, save=True):
+        self.savep = save
+
+    def Saveq(self, save=True):
+        self.saveq = save
+
     def SaveTraj(self, nstep=100):
         self.nstep = nstep
 
@@ -458,7 +464,7 @@ class md:
             f = self.pforce.force(q)
         # use dynamical matrix
         elif self.dyn is not None:
-            f = -1*mdot(self.dyn, q)
+            f = -1.0*mdot(self.dyn, q)
         else:
             print("no driver, no md")
             sys.exit()

@@ -156,6 +156,12 @@ def rpadleft(bs, b):
 def mdot(* args):
     return np.linalg.multi_dot([im for im in args])
 
+def mm(* args):
+    # mm with arbitrary number of arguments
+    tmp=args[0].copy()
+    for mat in args[1:]:
+        tmp=np.dot(tmp,mat)
+    return tmp
 
 def chkShape(a):
     """
