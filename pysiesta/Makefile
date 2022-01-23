@@ -40,21 +40,21 @@ FORLIBS =
 FSIESTA_OBJ=$(SIESTADIR)/Src/fsockets.o $(SIESTADIR)/Src/sockets.o $(SIESTADIR)/Src/fsiesta_sockets.o      # Client helper routines
 FSIESTA_MOD=$(SIESTADIR)/Src/fsockets.mod $(SIESTADIR)/Src/sockets.mod $(SIESTADIR)/Src/fsiesta_sockets.mod    # Client helper module
 
-PXF_OBJ=$(SIESTADIR)/Src/pxf.o              # Portable flush
+#FSIESTA_OBJ==$(SIESTADIR)/Src/fsiesta_pipes.o      # Client helper routines
+#FSIESTA_MOD=$(SIESTADIR)/Src/fsiesta_pipes.mod    # Client helper module
 
-FSIESTAPIPE_OBJ=$(SIESTADIR)/Src/fsiesta_pipes.o      # Client helper routines
-FSIESTAPIPE_MOD=$(SIESTADIR)/Src/fsiesta_pipes.mod    # Client helper module
+#PXF_OBJ=$(SIESTADIR)/Src/pxf.o              # Portable flush
 
 pysiesta_socket: $(HOBJS) $(HMOD)
 	f2py --f90exec=$(PYFC) --f90flags="$(FFLAGS)" $(FORLIBS) $(HOBJS) -c siestaf.f90 -m pysiesta_socket
 	mkdir test
 	cp pysiesta_socket*.so siestaf.py h2o/* test
 
-pysiesta_pipe: $(HOBJSPIPE) $(HMODPIPE)
-	f2py --f90exec=$(PYFC) --f90flags="$(FFLAGS)" $(FORLIBS) $(HOBJSPIPE) -c siestaf.f90 -m pysiesta_pipe
-	mkdir test
-	cp pysiesta_pipe*.so siestaf.py h2o/* test
-	
+#pysiesta_pipe: $(HOBJSPIPE) $(HMODPIPE)
+#	f2py --f90exec=$(PYFC) --f90flags="$(FFLAGS)" $(FORLIBS) $(HOBJSPIPE) -c siestaf.f90 -m pysiesta_pipe
+#	mkdir test
+#	cp pysiesta_pipe*.so siestaf.py h2o/* test
+
 clean: 
 	@echo "--> Cleaning object and executable files"
 	rm -r *.o *.mod pysiesta*.so test

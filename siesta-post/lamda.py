@@ -98,12 +98,13 @@ class EPH:
 
 # --------------------------------------------------------------------------
 # user input parameters
-print('Usage : python Lambda_new2.py  <PhononNetCDF> <Bias> <Ef> <phonon cutoff> <HSSigmaNetCDF>')
+print('Usage : python lamda.py  <PhononNetCDF> <Bias> <Ef> <phonon cutoff> <HSSigmaNetCDF>')
 print('PhononNetCDF : Calculate MAMA using HSSigma and Heph NetCDF file')
 print('Bias: The bias applied')
 print('Ef: Position of Fermi level, muL=Ef+Bias, muR=Ef-Bias')
 print('phonon cutoff: phonon energy beyond which the off-diagonal Lambda terms\
         are set to zero.')
+print('HSSigmaNetCDF: HSSigmaMEAN.nc from TSrun')
 args = sys.argv[1:]
 
 try:
