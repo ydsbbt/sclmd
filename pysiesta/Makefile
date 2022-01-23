@@ -32,7 +32,7 @@ FPPFLAGS:=$(FPPFLAGS) $(DEFS_PREFIX)-UMPI $(DEFS_PREFIX)-UCDF
 
 #FFLAGS= -g -traceback -check all -check nopointer -check noshape -warn all -DFC_HAVE_FLUSH -DFC_HAVE_ABORT -fPIC
 #FFLAGS= -O3 -xW -DFC_HAVE_FLUSH -DFC_HAVE_ABORT -fPIC
-FFLAGS= -O2  -DFC_HAVE_FLUSH -DFC_HAVE_ABORT -fPIC
+FFLAGS= -O  -DFC_HAVE_FLUSH -DFC_HAVE_ABORT -fPIC
 #FORLIBS = -L/opt/intel/fce/10.1.015/lib/ -lguide -lifcore -lifport -limf
 #FORLIBS = -L/opt/intel/fce/10.1.015/lib/ -lifcore -lifport -limf
 FORLIBS = 
