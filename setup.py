@@ -2,17 +2,17 @@
 # -*- coding:utf-8 _*-
 from setuptools import setup, find_packages
 
-VERSION = '0.4.5'
+VERSION = '0.4.6'
 
 setup(
     name='sclmd',
     version=VERSION,
     description='Semi-classical Langevin molecular dynamics',
     long_description='Molecular dynamics script using a semi-classical generalized Langevin equation',
-    keywords='md molecular dynamics quantum Langevin',
-    #author='Jing-Tao Lv',
-    #author_email='jtlu@hust.edu.cn',
-    #url='https://github.com/phyjtlu/pymd',
+    keywords='molecular dynamics, quantum bath, semiclassical generalized Langevin equation',
+    author='Jing-Tao Lv',
+    author_email='jtlu@hust.edu.cn',
+    url='https://github.com/ApertureG/sclmd',
     license='GNU General Public License v3.0',
     packages=find_packages(),
     include_package_data=True,

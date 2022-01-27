@@ -6,7 +6,7 @@ import sys
 import numpy as np
 from netCDF4 import Dataset
 
-from sclmd.functions import nearest, mm
+from sclmd.functions import mdot, nearest
 
 '''
 def cutlayers(infile, nalayer, nl, nr, outfile, ord=None):
@@ -248,7 +248,7 @@ def ReadDynmat(filename, order=None):
     else:
         nU = U
 
-    dyn = mm(nU.T, np.diag(hw**2), nU)
+    dyn = mdot(nU.T, np.diag(hw**2), nU)
     dyn = 0.5*(dyn+dyn.T)
     return dyn, nU, hw
 
