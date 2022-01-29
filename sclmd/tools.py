@@ -209,14 +209,14 @@ def get_atommass(name):
             return value
 
 
-def eff():
+def eff(dynmatfilename='dynmat.dat'):
     '''
     eliminate false frequencies
     '''
-    dynmatdat = np.loadtxt('dynmat.dat')
+    dynmatdat = np.loadtxt(dynmatfilename)
     dynlen = int(3*np.sqrt(len(dynmatdat)/3))
     dynmat = dynmatdat.reshape((dynlen, dynlen))
-    #dynmat = (dynmat+dynmat.conjugate().transpose())/2
+    dynmat = (dynmat+dynmat.transpose())/2
     eigvals, eigvecs = np.linalg.eigh(dynmat)
     while not (eigvals > 0).all():
         for i, val in enumerate(eigvals):
@@ -225,8 +225,10 @@ def eff():
                 eigvals[i] = 0
         dynmat = np.linalg.multi_dot([eigvecs, np.identity(
             len(eigvals))*eigvals, np.linalg.inv(eigvecs)])
+        dynmat = (dynmat+dynmat.transpose())/2
         eigvals, eigvecs = np.linalg.eigh(dynmat)
-    np.savetxt('dynmatmod.dat', dynmat)
+    np.savetxt('mod'+dynmatfilename, dynmat)
+    return dynmat
 
 
 def predeepmd(infile, fmt, outfile='deepmd_data', size=5):
