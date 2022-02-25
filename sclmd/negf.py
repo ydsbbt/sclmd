@@ -118,7 +118,7 @@ class bpt:
             (self.tmnumber[:, 0]*self.rpc, self.tmnumber[:, 1])))
         print('Transmission saved')
 
-    def getps(self, T, maxomega, intnum, atomlist=None, filename=None, vector=False):
+    def getps(self, T, maxomega, intnum, atomlist=None, filename=None, vector=False, omegalist=None):
         if filename is not None:
             print('Calculate power spectrum at '+str(T)+'K of '+str(filename))
         else:
@@ -127,7 +127,10 @@ class bpt:
             # print("Power spectrum of all atoms")
             atomlist = np.array(range(0, len(self.dynmat))
                                 ) + len(self.dofatomfixed[0])
-        x2 = np.linspace(0, maxomega/self.rpc, intnum+1)
+        if omegalist is not None:
+            x2 = np.sort(omegalist)/self.rpc
+        else:
+            x2 = np.linspace(0, maxomega/self.rpc, intnum+1)
         if vector:
             function = np.vectorize(self.ps)
             self.psnumber = np.array(
@@ -145,6 +148,7 @@ class bpt:
             np.savetxt('powerspectrum.'+str(T)+'.dat',
                        np.column_stack((self.psnumber[:, 0]*self.rpc, self.psnumber[:, 1])))
         print('Power spectrum saved')
+        #integrate(0,maxomega)/2/PI = kinetic energy
 
     def retarselfenergy(self, omega, dofatoms):
         semat = np.zeros((self.natoms*3, self.natoms*3), dtype=np.complex_)
@@ -226,7 +230,7 @@ class bpt:
         if not self.isbias:
             # Power spectrum of selected atoms
             return -2*omega**2*self.bosedist(omega, T)*np.trace(np.imag(self.retargf(omega)[dofatomse][:, dofatomse]))
-            #return omega**2*np.trace(np.real(np.linalg.multi_dot([self.retargf(omega), self.totalkselfenergy(omega, T), self.advangf(omega)])[dofatomse][:, dofatomse]))
+            # return omega**2*np.trace(np.real(np.linalg.multi_dot([self.retargf(omega), self.totalkselfenergy(omega, T), self.advangf(omega)])[dofatomse][:, dofatomse]))
         elif self.isbias:
             # Power spectrum of bias atoms
             return omega**2*np.trace(np.real(np.linalg.multi_dot([self.retargf(omega), self.totalkselfenergy(omega, T), self.advangf(omega)])[dofatomse][:, dofatomse]))
@@ -307,6 +311,72 @@ class bpt:
         plt.ylabel('Transmission')
         plt.savefig('transmission.png')
 
+'''
+# Try to calcuate thermal current between 2 phonon baths and 1 electron bath
+    def greatgf(self, omega, T, dofatoms):
+        # Greater Green function
+        dofatomse = np.array(dofatoms)-len(self.dofatomfixed[0])
+        return np.linalg.multi_dot([self.retargf(omega)[dofatomse][:, dofatomse], self.greatselfenergy(omega, T, dofatoms), self.advangf(omega)[dofatomse][:, dofatomse]])
+
+    def lessgf(self, omega, T, dofatoms):
+        # Lesser Green function
+        dofatomse = np.array(dofatoms)-len(self.dofatomfixed[0])
+        return np.linalg.multi_dot([self.retargf(omega)[dofatomse][:, dofatomse], self.lessselfenergy(omega, T, dofatoms), self.advangf(omega)[dofatomse][:, dofatomse]])
+
+    def greatbiasgf(self, omega, T, dofatoms):
+        # Greater Green function
+        dofatomse = np.array(dofatoms)-len(self.dofatomfixed[0])
+        return np.linalg.multi_dot([self.retargf(omega)[dofatomse][:, dofatomse], self.greatbiasselfenergy(omega, T, dofatoms), self.advangf(omega)[dofatomse][:, dofatomse]])
+
+    def lessbiasgf(self, omega, T, dofatoms):
+        # Lesser Green function
+        dofatomse = np.array(dofatoms)-len(self.dofatomfixed[0])
+        return np.linalg.multi_dot([self.retargf(omega)[dofatomse][:, dofatomse], self.lessbiasselfenergy(omega, T, dofatoms), self.advangf(omega)[dofatomse][:, dofatomse]])
+
+    def greatselfenergy(self, omega, T, dofatoms):
+        return 2j*np.imag(self.retarselfenergy(omega, dofatoms))*(self.bosedist(omega, T)+1)
+
+    def lessselfenergy(self, omega, T, dofatoms):
+        return 2j*np.imag(self.retarselfenergy(omega, dofatoms))*self.bosedist(omega, T)
+
+    def greatbiasselfenergy(self, omega, T, dofatoms):
+        return 2j*np.imag(self.retarbiasselfenergy(omega, dofatoms))*(self.bosedist(omega, T)+1)
+
+    def lessbiasselfenergy(self, omega, T, dofatoms):
+        return 2j*np.imag(self.retarbiasselfenergy(omega, dofatoms))*self.bosedist(omega, T)
+
+    def leadthermalcurrent(self, T, dofatoms):
+        x = np.linspace(0, self.maxomega, self.intnum+1)
+        T = T
+        dofatoms = dofatoms
+
+        def f(i):
+            return self.rpc*x[i]/2/np.pi*np.trace(np.dot(self.greatgf(x[i], T, dofatoms), self.lessselfenergy(x[i], T, dofatoms))-np.dot(self.lessbiasgf(x[i], T, dofatoms), self.greatselfenergy(x[i], T, dofatoms)))
+
+        def trape(function):
+            n = len(x) - 1
+            function = np.vectorize(function)
+            arr = function(range(n+1))
+            return (float(x[-1] - x[0])/n/2.)*(2*arr.sum() - arr[0] - arr[-1])
+        # Unit in nW
+        return trape(f)*1.60217662*1e2
+
+    def biasthermalcurrent(self, T, dofatoms):
+        x = np.linspace(0, self.maxomega, self.intnum+1)
+        T = T
+        dofatoms = dofatoms
+
+        def f(i):
+            return self.rpc*x[i]/2/np.pi*np.trace(np.dot(self.greatbiasgf(x[i], T, dofatoms), self.lessbiasselfenergy(x[i], T, dofatoms))-np.dot(self.lessgf(x[i], T, dofatoms), self.greatbiasselfenergy(x[i], T, dofatoms)))
+
+        def trape(function):
+            n = len(x) - 1
+            function = np.vectorize(function)
+            arr = function(range(n+1))
+            return (float(x[-1] - x[0])/n/2.)*(2*arr.sum() - arr[0] - arr[-1])
+        # Unit in nW
+        return trape(f)*1.60217662*1e2
+'''
 
 if __name__ == '__main__':
     '''

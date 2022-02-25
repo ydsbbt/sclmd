@@ -234,3 +234,4 @@ def powerspecp(ps, dt, nmd):
     psw = np.array([myfft(dt, nmd).Fourier1D(a) for a in pst])
     psw = np.real(np.transpose(psw*np.conjugate(psw)))
     return np.array([[i*dw, np.sum(psw[i])/dt/nmd] for i in range(nmd)])
+    #integrate(0,maxomega)/2/PI = kinetic energy
