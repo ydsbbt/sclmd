@@ -89,6 +89,7 @@ class lammpsdriver(lammps):
     def dynmat(self, q=None):
         if q is not None:
             self.scatter_atoms("x", 1, 3, self.newx(q))
+            self.command("run 0")
             print("Calculate dynamical matrix")
         else:
             print("Calculate zero displacement dynamical matrix")
