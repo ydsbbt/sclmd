@@ -99,6 +99,33 @@ def dumpavetraj(lammpsdata, trajectoriesfiles, position_only=False, outputname="
     print("export LAMMPS data file %s" % outputname)
     export_file(data, outputname, "lammps/data", atom_style="full")
 
+def dumpke(timestep, trajectoriesfiles, atommass):
+    '''
+    dump kinetic energy distribution from MD trajectories files
+    time step is in fs
+    trajectory files are in .xyz format, unit in angstrom
+    '''
+    def sumke(inputlist):
+        return sum([_ ** 2 for _ in inputlist])
+    #atommass = np.array(atommass)*1.6606e-27 # Kg
+    atommass = np.array(atommass)*1.6606 # Kg
+    from ovito.io import import_file
+    ke = [] # Kinetic energy
+    for trajfile in trajectoriesfiles:
+        ss = [] # Squared speed
+        print("import trajectorie file %s" % trajfile)
+        traj = import_file(trajfile, columns=[
+            "Particle Type", "Position.X", "Position.Y", "Position.Z"])
+        atomtype=np.array(traj.source.compute().particles['Particle Type'])
+        mass = np.array([atommass[i-1] for i in atomtype])
+        for frame_index in range(traj.source.num_frames-1):
+            #velocity = (np.array(traj.source.compute(frame_index+1).particles.positions)-np.array(traj.source.compute(frame_index).particles.positions))/timestep*1e5 # m/s
+            velocity = (np.array(traj.source.compute(frame_index+1).particles.positions)-np.array(traj.source.compute(frame_index).particles.positions))/timestep # m/s
+            ss = np.array((ss*frame_index+[sumke(velocity[i]) for i in range(len(velocity))]))/(frame_index+1)
+        ke.append(0.5*mass*ss)
+    #ke = np.array(ke)*6.24150913e18 # eV
+    ke = np.array(ke)*6.24150913e1 # eV
+    np.savetxt('kineticenergyaverage.dat',(np.mean(ke,axis=0)), header="Kinetic Energy(eV)")
 
 def calHF(dlist=1, bathnum=2):
     import glob
@@ -173,18 +200,17 @@ def calTC(delta, dlist=1, bathnum=2, L=None, A=None):
         if L is not None and A is not None:
             np.savetxt('thermalconductivity.'+str(int(temperture))+'.dat',
                        (np.mean(kappa*L/A*10), np.std(kappa*L/A*10)), header="Mean(W/m-K) Std(W/m-K)")
-    else:
-        #print("delta=0, no thermal conductance/conductivity calculated.")
-        if bathnum == 2:
-            kappa = (kb[0]-kb[1])/2
-            kappa = np.delete(kappa, dlist)
-            # for i in range(len(kappa)):
-            #    kappa[i]=np.mean(kappa[0:i+1])
-        elif bathnum == 3:
-            kappa = -(kb[0]+kb[1]-kb[2])/4
-            kappa = np.delete(kappa, dlist)
-        np.savetxt('heatflux-between-baths.'+str(int(temperture))+'.dat',
-                   (np.mean(kappa), np.std(kappa)), header="Mean(nW) Std(nW)")
+
+    if bathnum == 2:
+        kappa = (kb[0]-kb[1])/2
+        kappa = np.delete(kappa, dlist)
+        # for i in range(len(kappa)):
+        #    kappa[i]=np.mean(kappa[0:i+1])
+    elif bathnum == 3:
+        kappa = -(kb[0]+kb[1]-kb[2])/4
+        kappa = np.delete(kappa, dlist)
+    np.savetxt('heatflux-between-baths.'+str(int(temperture))+'.dat',
+               (np.mean(kappa), np.std(kappa)), header="Mean(nW) Std(nW)")
 
 
 def get_atomname(mass):
@@ -293,3 +319,7 @@ if __name__ == "__main__":
           "deltaforce.run3.npy", "deltaforce.run4.npy", "deltaforce.run5.npy",
           ]
     avdf(fl)
+    
+    trajectories = ["trajectories.300.run0.ani", "trajectories.300.run1.ani"]
+    atommass=[196.966569,32.065,12.0107,1.00794]
+    dumpke(0.5*1000, trajectories, atommass)
