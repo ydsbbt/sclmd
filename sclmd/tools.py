@@ -109,6 +109,7 @@ def dumpke(timestep, trajectoriesfiles, atommass):
         return sum([_ ** 2 for _ in inputlist])
     #atommass = np.array(atommass)*1.6606e-27 # Kg
     atommass = np.array(atommass)*1.6606 # Kg
+    from tqdm import tqdm
     from ovito.io import import_file
     ke = [] # Kinetic energy
     for trajfile in trajectoriesfiles:
@@ -118,14 +119,15 @@ def dumpke(timestep, trajectoriesfiles, atommass):
             "Particle Type", "Position.X", "Position.Y", "Position.Z"])
         atomtype=np.array(traj.source.compute().particles['Particle Type'])
         mass = np.array([atommass[i-1] for i in atomtype])
-        for frame_index in range(traj.source.num_frames-1):
+        for frame_index in tqdm(range(traj.source.num_frames-1)):
             #velocity = (np.array(traj.source.compute(frame_index+1).particles.positions)-np.array(traj.source.compute(frame_index).particles.positions))/timestep*1e5 # m/s
             velocity = (np.array(traj.source.compute(frame_index+1).particles.positions)-np.array(traj.source.compute(frame_index).particles.positions))/timestep # m/s
             ss = np.array((ss*frame_index+[sumke(velocity[i]) for i in range(len(velocity))]))/(frame_index+1)
         ke.append(0.5*mass*ss)
     #ke = np.array(ke)*6.24150913e18 # eV
     ke = np.array(ke)*6.24150913e1 # eV
-    np.savetxt('kineticenergyaverage.dat',(np.mean(ke,axis=0)), header="Kinetic Energy(eV)")
+    np.savetxt('kineticenergy.dat',(np.array(ke)), header="Kinetic Energy(eV), MD Times")
+    np.savetxt('kineticenergyaverage.dat',(np.mean(np.array(ke),axis=0)), header="Kinetic Energy(eV)")
 
 def calHF(dlist=1, bathnum=2):
     import glob
@@ -320,6 +322,7 @@ if __name__ == "__main__":
           ]
     avdf(fl)
     
+    from sclmd.tools import dumpke
     trajectories = ["trajectories.300.run0.ani", "trajectories.300.run1.ani"]
     atommass=[196.966569,32.065,12.0107,1.00794]
     dumpke(0.5*1000, trajectories, atommass)
