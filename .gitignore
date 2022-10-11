@@ -9,3 +9,4 @@ clean.sh
 log.lammps
 .vscode
 *.pyc
+.idea
