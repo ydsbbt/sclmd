@@ -127,7 +127,7 @@ eta = 0.0001  # In eV! Note Im-energy is not included in SFE file!
 FirstTimek = True
 FirstTimeMean = True
 
-Trans = np.zeros((nkpts, ne), np.float)
+Trans = np.zeros((nkpts, ne), float)
 ft = open("Trans.realspace.dat", "w")
 ft.write("# Transmission using real-space self-energy\n")
 ft.write("# energy, gammaoverlap, sigmaoverlap T(SIGMATOT), T(SIGMAL+SIGMAR)\n")
@@ -166,7 +166,7 @@ for ien in range(ne):
 
             nc.createDimension('na', nad)
             nc.createDimension('xyz', 3)
-            xa_save = nc.createVariable('xa', np.float, ('na', 'xyz'))
+            xa_save = nc.createVariable('xa', float, ('na', 'xyz'))
             xa_save.unit = "Ang."
             xa_save.long_name = "Atomic coordinates"
             anr_save = nc.createVariable('anr', np.int, ('na',))
@@ -181,38 +181,38 @@ for ien in range(ne):
                 iad = iad+1
 
             nc.createDimension('ne', ne)
-            ReEn = nc.createVariable('ReE', np.float, ('ne',))
+            ReEn = nc.createVariable('ReE', float, ('ne',))
             ReEn.unit = "eV"
-            ImEn = nc.createVariable('ImE', np.float, ('ne',))
+            ImEn = nc.createVariable('ImE', float, ('ne',))
             ImEn.unit = "eV"
 
             nc.createDimension('nkpts', nkpts)
-            kpt_save = nc.createVariable('kpt', np.float, ('xyz',))
+            kpt_save = nc.createVariable('kpt', float, ('xyz',))
             kpt_save[:] = kpt[:]
 
             nc.createDimension('nos', nos)
-            ReH_save = nc.createVariable('ReH', np.float, ('nos', 'nos'))
-            ImH_save = nc.createVariable('ImH', np.float, ('nos', 'nos'))
-            ReS_save = nc.createVariable('ReS', np.float, ('nos', 'nos'))
-            ImS_save = nc.createVariable('ImS', np.float, ('nos', 'nos'))
+            ReH_save = nc.createVariable('ReH', float, ('nos', 'nos'))
+            ImH_save = nc.createVariable('ImH', float, ('nos', 'nos'))
+            ReS_save = nc.createVariable('ReS', float, ('nos', 'nos'))
+            ImS_save = nc.createVariable('ImS', float, ('nos', 'nos'))
             ReH_save[:, :] = H.real[:, :]
             ImH_save[:, :] = H.imag[:, :]
             ReS_save[:, :] = S.real[:, :]
             ImS_save[:, :] = S.imag[:, :]
 
             ReSigmaL = nc.createVariable(
-                'ReSigmaL', np.float, ('ne', 'nos', 'nos'))
+                'ReSigmaL', float, ('ne', 'nos', 'nos'))
             ImSigmaL = nc.createVariable(
-                'ImSigmaL', np.float, ('ne', 'nos', 'nos'))
+                'ImSigmaL', float, ('ne', 'nos', 'nos'))
             ReSigmaL.unit = "eV"
             ImSigmaL.unit = "eV"
             ReSigmaL.long_name = "Real part of left self-energy"
             ImSigmaL.long_name = "Imag. part of left self-energy"
 
             ReSigmaR = nc.createVariable(
-                'ReSigmaR', np.float, ('ne', 'nos', 'nos'))
+                'ReSigmaR', float, ('ne', 'nos', 'nos'))
             ImSigmaR = nc.createVariable(
-                'ImSigmaR', np.float, ('ne', 'nos', 'nos'))
+                'ImSigmaR', float, ('ne', 'nos', 'nos'))
             ReSigmaR.unit = "eV"
             ImSigmaR.unit = "eV"
             ReSigmaR.long_name = "Real part of right self-energy"
@@ -229,8 +229,8 @@ for ien in range(ne):
         ImEn[ien] = eta
 
         # put self-energies into hm
-        SL = np.zeros(np.shape(Hfull), np.complex)
-        SR = np.zeros(np.shape(Hfull), np.complex)
+        SL = np.zeros(np.shape(Hfull), complex)
+        SR = np.zeros(np.shape(Hfull), complex)
         SFEL = rSL[ikpt, ien, :, :] + 1j*iSL[ikpt, ien, :, :]
         SFER = rSR[ikpt, ien, :, :] + 1j*iSR[ikpt, ien, :, :]
 
@@ -263,11 +263,11 @@ for ien in range(ne):
 
         if ikpt == 0:
             print(ikpt, " -- Zero sums")
-            Gsum = np.zeros(np.shape(G), np.complex)
-            GLsum = np.zeros(np.shape(G), np.complex)
-            GRsum = np.zeros(np.shape(G), np.complex)
-            Hsum = np.zeros(np.shape(G), np.complex)
-            Ssum = np.zeros(np.shape(G), np.complex)
+            Gsum = np.zeros(np.shape(G), complex)
+            GLsum = np.zeros(np.shape(G), complex)
+            GRsum = np.zeros(np.shape(G), complex)
+            Hsum = np.zeros(np.shape(G), complex)
+            Ssum = np.zeros(np.shape(G), complex)
 
     # Note we use time-reversal symmetry here, G(-k)=transpose(G(k))!!
         Gsum = Gsum + (0.5*wkpt)*(G + np.transpose(G))
@@ -298,7 +298,7 @@ for ien in range(ne):
         nc = Dataset(ncfile, 'w')
         nc.createDimension('na', nad)
         nc.createDimension('xyz', 3)
-        xa_save = nc.createVariable('xa', np.float, ('na', 'xyz'))
+        xa_save = nc.createVariable('xa', float, ('na', 'xyz'))
         xa_save.unit = "Ang."
         xa_save.long_name = "Atomic coordinates"
         anr_save = nc.createVariable('anr', np.int, ('na',))
@@ -313,21 +313,21 @@ for ien in range(ne):
             iad = iad+1
 
         nc.createDimension('ne', ne)
-        ReEn = nc.createVariable('ReE', np.float, ('ne',))
+        ReEn = nc.createVariable('ReE', float, ('ne',))
         ReEn.unit = "eV"
-        ImEn = nc.createVariable('ImE', np.float, ('ne',))
+        ImEn = nc.createVariable('ImE', float, ('ne',))
         ImEn.unit = "eV"
 
         nc.createDimension('nkpts', nkpts)
-        kpts_save = nc.createVariable('kpts', np.float, ('nkpts', 'xyz'))
+        kpts_save = nc.createVariable('kpts', float, ('nkpts', 'xyz'))
         kpts_save[:] = kpts[:]
 
         nc.createDimension('nos', nos)
 
-        ReH_save = nc.createVariable('ReH', np.float, ('nos', 'nos'))
-        ImH_save = nc.createVariable('ImH', np.float, ('nos', 'nos'))
-        ReS_save = nc.createVariable('ReS', np.float, ('nos', 'nos'))
-        ImS_save = nc.createVariable('ImS', np.float, ('nos', 'nos'))
+        ReH_save = nc.createVariable('ReH', float, ('nos', 'nos'))
+        ImH_save = nc.createVariable('ImH', float, ('nos', 'nos'))
+        ReS_save = nc.createVariable('ReS', float, ('nos', 'nos'))
+        ImS_save = nc.createVariable('ImS', float, ('nos', 'nos'))
         ReH_save[:, :] = Hsum.real[:, :]
         ImH_save[:, :] = Hsum.imag[:, :]
         ReS_save[:, :] = Ssum.real[:, :]
@@ -335,27 +335,27 @@ for ien in range(ne):
 
         # Write real-space self-energy
         ReSIGMAL = nc.createVariable(
-            'ReSigmaL', np.float, ('ne', 'nos', 'nos'))
+            'ReSigmaL', float, ('ne', 'nos', 'nos'))
         ImSIGMAL = nc.createVariable(
-            'ImSigmaL', np.float, ('ne', 'nos', 'nos'))
+            'ImSigmaL', float, ('ne', 'nos', 'nos'))
         ReSIGMAL.unit = "eV"
         ImSIGMAL.unit = "eV"
         ReSIGMAL.long_name = "Real part of real-space left self-energy"
         ImSIGMAL.long_name = "Imag. part of real-space left self-energy"
 
         ReSIGMAR = nc.createVariable(
-            'ReSigmaR', np.float, ('ne', 'nos', 'nos'))
+            'ReSigmaR', float, ('ne', 'nos', 'nos'))
         ImSIGMAR = nc.createVariable(
-            'ImSigmaR', np.float, ('ne', 'nos', 'nos'))
+            'ImSigmaR', float, ('ne', 'nos', 'nos'))
         ReSIGMAR.unit = "eV"
         ImSIGMAR.unit = "eV"
         ReSIGMAR.long_name = "Real part of real-space right self-energy"
         ImSIGMAR.long_name = "Imag. part of real-space right self-energy"
 
         ReSIGMATOT = nc.createVariable(
-            'ReSigmaTOT', np.float, ('ne', 'nos', 'nos'))
+            'ReSigmaTOT', float, ('ne', 'nos', 'nos'))
         ImSIGMATOT = nc.createVariable(
-            'ImSigmaTOT', np.float, ('ne', 'nos', 'nos'))
+            'ImSigmaTOT', float, ('ne', 'nos', 'nos'))
         ReSIGMATOT.unit = "eV"
         ImSIGMATOT.unit = "eV"
         ReSIGMATOT.long_name = "Real part of real-space total self-energy"
