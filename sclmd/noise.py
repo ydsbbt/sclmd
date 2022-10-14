@@ -177,7 +177,7 @@ def enoise(efric, exim, exip, bias, T, ecut, dt, nmd, classical=False, zpmotion=
         awm = delta*equ(U.hbar*w-bias, ecut, T, classical, zpmotion)
         amatm = -0.5*aw*np.array(exip)+0.5*awm * \
             (np.array(exip)+1j*np.array(exim))
-        # nonequilibrium minus part
+        # nonequilibrium plus part
         awp = delta*equ(U.hbar*w+bias, ecut, T, classical, zpmotion)
         amatp = -0.5*aw*np.array(exip)+0.5*awp * \
             (np.array(exip)-1j*np.array(exim))
