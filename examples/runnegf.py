@@ -15,7 +15,8 @@ atomfixed = [range(0*3, (19+1)*3), range(181*3, (200+1)*3)]
 atomofbath = [range(20*3, (69+1)*3), range(131*3, (180+1)*3)]
 atomofcenter = [range(70*3, (130+1)*3)]
 mybpt = bpt(infile=lammpsinfile, maxomega=0.25, damp=0.1, dofatomofbath=atomofbath,
-            dofatomfixed=atomfixed, dynmatfile="dynma2t.dat", num=100, vector=False)
+            dofatomfixed=atomfixed, dynmatfile=None, num=100)
+mybpt.gettm()
 mybpt.plotresult()
 # T_H/C = T*(1±delta/2)
 T = [100, 200, 300, 400, 500, 600, 700,
